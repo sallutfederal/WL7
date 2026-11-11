@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 function getSetupUrl(path: string) {
   const base = process.env.SETUP_URL || 'http://localhost:8080';

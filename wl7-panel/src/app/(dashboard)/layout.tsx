@@ -1,5 +1,10 @@
 ﻿import Link from 'next/link';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { LayoutDashboard, Package, ShoppingCart, Receipt, Pin, Bot, Settings, Megaphone } from 'lucide-react';
+
+const SECRET = process.env.SESSION_SECRET || 'wl7-store-secret-key-2026';
+const TOKEN = 'WL7STORE:' + SECRET;
 
 const nav = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -12,7 +17,13 @@ const nav = [
   { href: '/settings', label: 'Config', icon: Settings },
 ];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('session')?.value;
+  if (token !== TOKEN) {
+    redirect('/login');
+  }
+
   return (
     <div className="flex min-h-screen bg-[#0a0a0f] text-[#e8e8e8]">
       <aside className="w-64 fixed h-screen overflow-y-auto border-r border-[#2a2a35] bg-[#14141a] p-6 z-20">
@@ -34,4 +45,3 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </div>
   );
 }
-

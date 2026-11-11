@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   const setupBase = process.env.SETUP_URL || 'http://localhost:8080';
