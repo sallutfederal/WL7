@@ -19,7 +19,7 @@
         }
       ]
     },
-    "wl7-panel": {
+    "panel": {
       "root": "wl7-panel",
       "framework": "nextjs",
       "bindings": [
@@ -45,7 +45,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": { "service": "wl7-panel" }
+      "destination": { "service": "panel" }
     }
   ]
 }
