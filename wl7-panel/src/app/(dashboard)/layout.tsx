@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { LayoutDashboard, Package, ShoppingCart, Receipt, Pin, Bot, Settings, Megaphone } from 'lucide-react';

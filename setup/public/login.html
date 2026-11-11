@@ -21,35 +21,47 @@
   .error { color: var(--red); font-size: 13px; margin-top: 12px; text-align: center; display: none; }
   .wolf { font-size: 48px; display: block; margin-bottom: 8px; }
 </style>
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n</head>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
 <body>
   <div class="login-box">
     <div class="logo">
       <span class="wolf">&#128058;</span>
       <h1>WL7 STORE</h1>
-      <p>Painel de Controle</p>
+      <p>Acesso Restrito</p>
     </div>
     <form id="loginForm">
       <div class="form-group">
-        <label>Usuario</label>
-        <input type="text" id="username" class="input" placeholder="WL7 STORE" autocomplete="username">
+        <label>Usuário</label>
+        <input type="text" id="username" class="input" placeholder="Digite seu usuário" autocomplete="username" required>
       </div>
       <div class="form-group">
         <label>Senha</label>
-        <input type="password" id="password" class="input" placeholder="********" autocomplete="current-password">
+        <input type="password" id="password" class="input" placeholder="••••••••••••" autocomplete="current-password" required>
       </div>
       <button type="submit" class="btn">Entrar</button>
-      <div class="error" id="errorMsg">Credenciais invalidas</div>
+      <div class="error" id="errorMsg">Credenciais inválidas</div>
     </form>
   </div>
   <script>
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const errEl = document.getElementById('errorMsg');
+      errEl.style.display = 'none';
       const u = document.getElementById('username').value;
       const p = document.getElementById('password').value;
-      const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, password: p }) });
-      if (r.ok) { window.location.href = '/'; }
-      else { document.getElementById('errorMsg').style.display = 'block'; }
+      const r = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p }),
+      });
+      if (r.ok) {
+        window.location.href = '/';
+      } else {
+        const data = await r.json().catch(() => ({}));
+        errEl.textContent = data.error || 'Credenciais inválidas';
+        errEl.style.display = 'block';
+      }
     });
   </script>
 </body>

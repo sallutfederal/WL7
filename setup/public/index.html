@@ -227,7 +227,10 @@
       <button class="btn-gold w-full flex items-center justify-center gap-2" onclick="openAnnounceModal()">
         <i class="fa-solid fa-bullhorn"></i> Anunciar Catálogo
       </button>
-      <button id="themeToggle" class="btn-dark w-full" onclick="toggleTheme()">Modo claro</button>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="themeToggle" class="btn-dark w-full text-xs" onclick="toggleTheme()">Modo claro</button>
+        <button class="btn-red w-full text-xs flex items-center justify-center gap-1" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+      </div>
     </div>
   </aside>
 
@@ -549,6 +552,20 @@
       });
     }
 
+    function esc(s) {
+      return String(s === undefined || s === null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    async function logout() {
+      await fetch('/api/logout', { method: 'POST' }).catch(() => {});
+      window.location.href = '/login';
+    }
+
     function badge(status) {
       const map = {
         pending: 'badge-pending',
@@ -557,7 +574,7 @@
         cancelled: 'badge-cancelled',
         expired: 'badge-expired',
       };
-      return '<span class="badge ' + (map[status] || '') + '">' + status + '</span>';
+      return '<span class="badge ' + (map[status] || '') + '">' + esc(status) + '</span>';
     }
 
     function applyTheme(t) {
@@ -680,7 +697,7 @@
       el.innerHTML =
         '<table class="table"><thead><tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>Status</th><th>Data</th></tr></thead><tbody>' +
         recent.map(o =>
-          '<tr><td>#' + o.id + '</td><td>' + o.userName + '</td><td>' + o.product + '</td><td>' + money(o.amount) + '</td><td>' + badge(o.status) + '</td><td class="text-xs" style="color:var(--muted);">' + new Date(o.createdAt).toLocaleString('pt-BR') + '</td></tr>'
+          '<tr><td>#' + esc(o.id) + '</td><td>' + esc(o.userName) + '</td><td>' + esc(o.product) + '</td><td>' + money(o.amount) + '</td><td>' + badge(o.status) + '</td><td class="text-xs" style="color:var(--muted);">' + new Date(o.createdAt).toLocaleString('pt-BR') + '</td></tr>'
         ).join('') +
         '</tbody></table>';
     }
@@ -694,7 +711,7 @@
       el.innerHTML =
         '<table class="table"><thead><tr><th>Nome</th><th>Produtos</th><th>Intro</th><th>Ações</th></tr></thead><tbody>' +
         state.catalogs.map(c =>
-          '<tr><td class="font-semibold">' + c.name + '</td><td>' + (c.products ? c.products.length : 0) + '</td><td class="text-xs" style="color:var(--muted);">' + (c.intro || '-') + '</td><td><button class="btn-red" onclick="deleteCatalog(\'' + c.name + '\')">Excluir</button></td></tr>'
+          '<tr><td class="font-semibold">' + esc(c.name) + '</td><td>' + (c.products ? c.products.length : 0) + '</td><td class="text-xs" style="color:var(--muted);">' + esc(c.intro || '-') + '</td><td><button class="btn-red" onclick="deleteCatalog(\'' + esc(c.name) + '\')">Excluir</button></td></tr>'
         ).join('') +
         '</tbody></table>';
     }
@@ -702,7 +719,7 @@
     function renderProducts() {
       const sel = document.getElementById('filterCatalog');
       const prev = sel.value;
-      sel.innerHTML = '<option value="">Todos</option>' + state.catalogs.map(c => '<option value="' + c.name + '">' + c.name + '</option>').join('');
+      sel.innerHTML = '<option value="">Todos</option>' + state.catalogs.map(c => '<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>').join('');
       if (prev) sel.value = prev;
       const filter = sel.value;
       const el = document.getElementById('productsTable');
@@ -718,7 +735,7 @@
       el.innerHTML =
         '<table class="table"><thead><tr><th>Catálogo</th><th>Nome</th><th>Preço</th><th>Estoque</th><th>Descrição</th><th>Ações</th></tr></thead><tbody>' +
         rows.map(p =>
-          '<tr><td>' + p.catalog + '</td><td class="font-semibold">' + p.name + '</td><td>' + money(p.price) + '</td><td>' + (p.stock === -1 ? '∞ ilimitado' : p.stock) + '</td><td class="text-xs" style="color:var(--muted);">' + (p.description || '-') + '</td><td class="flex gap-2"><button class="btn-dark" onclick="editStock(\'' + p.catalog + '\',\'' + p.name + '\',' + p.stock + ')">Estoque</button><button class="btn-red" onclick="deleteProduct(\'' + p.catalog + '\',\'' + p.name + '\')">Excluir</button></td></tr>'
+          '<tr><td>' + esc(p.catalog) + '</td><td class="font-semibold">' + esc(p.name) + '</td><td>' + money(p.price) + '</td><td>' + (p.stock === -1 ? '∞ ilimitado' : esc(p.stock)) + '</td><td class="text-xs" style="color:var(--muted);">' + esc(p.description || '-') + '</td><td class="flex gap-2"><button class="btn-dark" onclick="editStock(\'' + esc(p.catalog) + '\',\'' + esc(p.name) + '\',' + Number(p.stock) + ')">Estoque</button><button class="btn-red" onclick="deleteProduct(\'' + esc(p.catalog) + '\',\'' + esc(p.name) + '\')">Excluir</button></td></tr>'
         ).join('') +
         '</tbody></table>';
     }
@@ -735,7 +752,7 @@
       el.innerHTML =
         '<table class="table"><thead><tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead><tbody>' +
         list.map(o =>
-          '<tr><td>#' + o.id + '</td><td>' + o.userName + '</td><td>' + o.product + '</td><td>' + money(o.amount) + '</td><td>' + badge(o.status) + '</td><td class="text-xs" style="color:var(--muted);">' + new Date(o.createdAt).toLocaleString('pt-BR') + '</td><td class="flex items-center gap-2"><select class="input" style="width:120px; padding:5px 8px;" onchange="changeOrderStatus(' + o.id + ', this.value)"><option value="">Alterar...</option><option value="paid">Pago</option><option value="delivered">Entregue</option><option value="cancelled">Cancelado</option></select><button class="btn-green" onclick="deliverOrder(' + o.id + ')">Entregar</button></td></tr>'
+          '<tr><td>#' + esc(o.id) + '</td><td>' + esc(o.userName) + '</td><td>' + esc(o.product) + '</td><td>' + money(o.amount) + '</td><td>' + badge(o.status) + '</td><td class="text-xs" style="color:var(--muted);">' + new Date(o.createdAt).toLocaleString('pt-BR') + '</td><td class="flex items-center gap-2"><select class="input" style="width:120px; padding:5px 8px;" onchange="changeOrderStatus(' + Number(o.id) + ', this.value)"><option value="">Alterar...</option><option value="paid">Pago</option><option value="delivered">Entregue</option><option value="cancelled">Cancelado</option></select><button class="btn-green" onclick="deliverOrder(' + Number(o.id) + ')">Entregar</button></td></tr>'
         ).join('') +
         '</tbody></table>';
     }

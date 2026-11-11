@@ -13,7 +13,7 @@ const {
   Client, GatewayIntentBits, Partials, REST, Routes,
   SlashCommandBuilder, EmbedBuilder, ActionRowBuilder,
   ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
-  ChannelType,
+  ChannelType, PermissionFlagsBits,
 } = require('discord.js');
 
 const CONFIG_FILE = path.join(__dirname, 'config.json');
@@ -334,9 +334,17 @@ async function registerCommands() {
   console.log('commands registered');
 }
 
+const PUBLIC_COMMANDS = new Set(['help', 'browse', 'catalogs', 'products', 'myorders']);
+
 async function handle(interaction) {
   const name = interaction.commandName;
   try {
+    if (!PUBLIC_COMMANDS.has(name)) {
+      const isAdmin = interaction.memberPermissions && interaction.memberPermissions.has(PermissionFlagsBits.Administrator);
+      if (!isAdmin) {
+        return interaction.reply({ content: '⛔ Acesso negado: apenas administradores podem usar este comando.', ephemeral: true });
+      }
+    }
     switch (name) {
       case 'help': {
         return interaction.reply({ embeds: [helpOverviewEmbed()], components: helpComponents(), ephemeral: true });
@@ -890,9 +898,19 @@ client.once('clientReady', async () => {
   await notifyPrivate('**' + cfg.botName + '** online. ' + cfg.catalogs.length + ' catalogo(s), ' + cfg.pins.length + ' pin(s), ' + cfg.targets.length + ' bot(s), ' + cfg.orders.length + ' pedido(s).');
 });
 
-  // web panel
-  app.use((req, res, next) => { res.header('Access-Control-Allow-Origin', '*'); res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-IcePay-Signature, x-internal-service'); res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS'); if (req.method === 'OPTIONS') return res.sendStatus(200); next(); });
+  // web panel security headers & body limit
+  app.disable('x-powered-by');
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+  });
   app.use(express.json({
+    limit: '1mb',
     verify: (req, res, buf) => { req.rawBody = buf; },
   }));
 
@@ -917,30 +935,113 @@ client.once('clientReady', async () => {
   app.post('/api/webhook/pingocash', handlePingoWebhook);
   app.get('/health', (req, res) => res.json({ ok: true, bot: client.user ? client.user.tag : null }));
 
-  const sessions = new Set();
-  const STATELESS_TOKEN = require('crypto').createHmac('sha256', process.env.SESSION_SECRET || 'wl7-store-secret-key-2026').update('WL7STORE').digest('hex');
-  sessions.add(STATELESS_TOKEN);
-  function getToken(req) { const m = (req.headers.cookie || '').match(/session=([^;]+)/); return m ? m[1] : null; }
-  function isAuth(req) { const t = getToken(req); return t === STATELESS_TOKEN || sessions.has(t) || req.headers['x-internal-service'] === 'wl7-panel'; }
+  const crypto = require('crypto');
+  const ADMIN_USER = process.env.ADMIN_USER || 'WL7_ADMIN';
+  const ADMIN_PASS = process.env.ADMIN_PASS || 'WL7#x9K$mP2@vQ8!zR4';
+  const SESSION_SECRET = process.env.SESSION_SECRET || 'wl7-sec-9f4e2a8d1c7b6e3f5a0d9c8b7e6f5a4d3c2b1a0f';
+  const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+  const revokedTokens = new Set();
+
+  function safeCompare(a, b) {
+    const ha = crypto.createHash('sha256').update(String(a || '')).digest();
+    const hb = crypto.createHash('sha256').update(String(b || '')).digest();
+    return crypto.timingSafeEqual(ha, hb);
+  }
+
+  function createSessionToken(user) {
+    const exp = Date.now() + SESSION_TTL_MS;
+    const payload = Buffer.from(JSON.stringify({ u: user, exp })).toString('base64url');
+    const sig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('base64url');
+    return payload + '.' + sig;
+  }
+
+  function verifySessionToken(token) {
+    if (!token || typeof token !== 'string' || revokedTokens.has(token)) return false;
+    const parts = token.split('.');
+    if (parts.length !== 2) return false;
+    const [payload, sig] = parts;
+    const expectedSig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('base64url');
+    if (!safeCompare(sig, expectedSig)) return false;
+    try {
+      const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+      if (!data.exp || Date.now() > data.exp) return false;
+      return safeCompare(data.u, ADMIN_USER);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Brute-force protection (max 5 failed attempts per 15 min per IP)
+  const loginAttempts = new Map();
+  const MAX_LOGIN_ATTEMPTS = 5;
+  const LOCKOUT_MS = 15 * 60 * 1000;
+
+  function getClientIp(req) {
+    return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+  }
+
+  function getToken(req) {
+    const m = (req.headers.cookie || '').match(/(?:^|;\s*)session=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  function isAuth(req) {
+    const t = getToken(req);
+    if (verifySessionToken(t)) return true;
+    const internalSecret = process.env.INTERNAL_API_SECRET;
+    if (internalSecret && req.headers['x-internal-secret'] && safeCompare(req.headers['x-internal-secret'], internalSecret)) {
+      return true;
+    }
+    return false;
+  }
+
   // auth middleware for /api and / (except /login and /api/login)
   app.use((req, res, next) => {
-    if (req.path === '/health' || req.path === '/login' || req.path === '/login.html' || req.path === '/favicon.svg' || req.path === '/announce.js' || req.path === '/api/login' || req.path === '/webhook/pingocash' || req.path === '/api/webhook/pingocash' || req.path === '/test.html' || req.path === '/simple.html' || req.path.startsWith('/api/')) {
-      // api routes check auth individually below; allow login-related
-      if (req.path === '/health' || req.path === '/api/login' || req.path === '/api/webhook/pingocash' || req.path === '/webhook/pingocash') return next();
-      if (req.path.startsWith('/api/') && !isAuth(req)) return res.status(401).json({ error: 'unauthorized' });
+    if (req.path === '/health' || req.path === '/login' || req.path === '/login.html' || req.path === '/favicon.svg' || req.path === '/api/login' || req.path === '/webhook/pingocash' || req.path === '/api/webhook/pingocash') {
+      return next();
+    }
+    if (req.path.startsWith('/api/')) {
+      if (!isAuth(req)) return res.status(401).json({ error: 'Não autorizado' });
       return next();
     }
     if (!isAuth(req)) return res.redirect('/login');
     next();
   });
-  app.post('/api/login', (req, res) => {
+
+  app.post('/api/login', async (req, res) => {
+    const ip = getClientIp(req);
+    const now = Date.now();
+    const record = loginAttempts.get(ip) || { count: 0, lockUntil: 0 };
+    if (record.lockUntil > now) {
+      const mins = Math.ceil((record.lockUntil - now) / 60000);
+      return res.status(429).json({ error: 'Muitas tentativas falhas. Tente novamente em ' + mins + ' min.' });
+    }
     const { username, password } = req.body || {};
-    if (username === 'WL7 STORE' && password === 'WL7STORE') {
-      sessions.add(STATELESS_TOKEN);
-      res.setHeader('Set-Cookie', 'session=' + STATELESS_TOKEN + '; Path=/; HttpOnly; SameSite=Lax');
+    if (safeCompare(username, ADMIN_USER) && safeCompare(password, ADMIN_PASS)) {
+      loginAttempts.delete(ip);
+      const token = createSessionToken(ADMIN_USER);
+      const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https' || Boolean(process.env.VERCEL);
+      res.setHeader(
+        'Set-Cookie',
+        'session=' + encodeURIComponent(token) + '; Path=/; HttpOnly; SameSite=Strict; Max-Age=43200' + (isSecure ? '; Secure' : '')
+      );
       return res.json({ ok: true });
     }
-    res.status(401).json({ error: 'invalid credentials' });
+    record.count += 1;
+    if (record.count >= MAX_LOGIN_ATTEMPTS) {
+      record.lockUntil = now + LOCKOUT_MS;
+      record.count = 0;
+      notifyPrivate('🚨 **Alerta de Segurança**: IP `' + ip + '` bloqueado por 15 minutos após 5 tentativas de login inválidas no painel.').catch(() => {});
+    }
+    loginAttempts.set(ip, record);
+    res.status(401).json({ error: 'Credenciais inválidas' });
+  });
+
+  app.post('/api/logout', (req, res) => {
+    const t = getToken(req);
+    if (t) revokedTokens.add(t);
+    res.setHeader('Set-Cookie', 'session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0');
+    res.json({ ok: true });
   });
   app.get('/login', (req, res) => res.sendFile(require('path').join(__dirname, 'public', 'login.html')));
   app.use(express.static(path.join(__dirname, 'public')));
