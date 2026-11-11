@@ -18,24 +18,6 @@
           "env": "GATEWAY_URL"
         }
       ]
-    },
-    "panel": {
-      "root": "wl7-panel",
-      "framework": "nextjs",
-      "bindings": [
-        {
-          "type": "service",
-          "service": "setup",
-          "format": "url",
-          "env": "SETUP_URL"
-        },
-        {
-          "type": "service",
-          "service": "gateway",
-          "format": "url",
-          "env": "GATEWAY_URL"
-        }
-      ]
     }
   },
   "rewrites": [
@@ -45,7 +27,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": { "service": "panel" }
+      "destination": { "service": "setup" }
     }
   ]
 }

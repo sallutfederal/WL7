@@ -17,6 +17,13 @@ const {
 } = require('discord.js');
 
 const CONFIG_FILE = path.join(__dirname, 'config.json');
+const TMP_CONFIG_FILE = path.join(require('os').tmpdir(), 'wl7-config.json');
+function getReadableConfigFile() {
+  if (process.env.VERCEL && fs.existsSync(TMP_CONFIG_FILE)) return TMP_CONFIG_FILE;
+  if (fs.existsSync(CONFIG_FILE)) return CONFIG_FILE;
+  if (fs.existsSync(TMP_CONFIG_FILE)) return TMP_CONFIG_FILE;
+  return CONFIG_FILE;
+}
 const DEFAULT_CATALOGS = ['laras', 'infocc', 'btmob', 'consul'];
 const DEFAULT_PRODUCTS = {
   btmob: [
@@ -47,8 +54,9 @@ const DEFAULT_CONFIG = {
 
 function loadConfig() {
   try {
-    if (fs.existsSync(CONFIG_FILE)) {
-      const raw = fs.readFileSync(CONFIG_FILE, 'utf8').replace(/^\uFEFF/, '');
+    const file = getReadableConfigFile();
+    if (fs.existsSync(file)) {
+      const raw = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '');
       const c = { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
       if (Array.isArray(c.products) && c.products.length && !c.catalogs) {
         c.catalogs = [{ name: 'geral', description: '', intro: '', products: c.products }];
@@ -71,7 +79,14 @@ function loadConfig() {
   } catch (e) { console.error('config load error', e); }
   return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 }
-function saveConfig(cfg) { fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2), 'utf8'); }
+function saveConfig(cfg) {
+  const json = JSON.stringify(cfg, null, 2);
+  try {
+    fs.writeFileSync(CONFIG_FILE, json, 'utf8');
+  } catch (e) {
+    try { fs.writeFileSync(TMP_CONFIG_FILE, json, 'utf8'); } catch (e2) {}
+  }
+}
 
 let cfg = loadConfig();
 if (!cfg.privateWebhook && process.env.PRIVATE_WEBHOOK) cfg.privateWebhook = process.env.PRIVATE_WEBHOOK;
@@ -903,11 +918,13 @@ client.once('clientReady', async () => {
   app.get('/health', (req, res) => res.json({ ok: true, bot: client.user ? client.user.tag : null }));
 
   const sessions = new Set();
+  const STATELESS_TOKEN = require('crypto').createHmac('sha256', process.env.SESSION_SECRET || 'wl7-store-secret-key-2026').update('WL7STORE').digest('hex');
+  sessions.add(STATELESS_TOKEN);
   function getToken(req) { const m = (req.headers.cookie || '').match(/session=([^;]+)/); return m ? m[1] : null; }
-  function isAuth(req) { return sessions.has(getToken(req)) || req.headers['x-internal-service'] === 'wl7-panel'; }
+  function isAuth(req) { const t = getToken(req); return t === STATELESS_TOKEN || sessions.has(t) || req.headers['x-internal-service'] === 'wl7-panel'; }
   // auth middleware for /api and / (except /login and /api/login)
   app.use((req, res, next) => {
-    if (req.path === '/health' || req.path === '/login' || req.path === '/login.html' || req.path === '/favicon.svg' || req.path === '/api/login' || req.path === '/webhook/pingocash' || req.path === '/api/webhook/pingocash' || req.path === '/test.html' || req.path === '/simple.html' || req.path.startsWith('/api/')) {
+    if (req.path === '/health' || req.path === '/login' || req.path === '/login.html' || req.path === '/favicon.svg' || req.path === '/announce.js' || req.path === '/api/login' || req.path === '/webhook/pingocash' || req.path === '/api/webhook/pingocash' || req.path === '/test.html' || req.path === '/simple.html' || req.path.startsWith('/api/')) {
       // api routes check auth individually below; allow login-related
       if (req.path === '/health' || req.path === '/api/login' || req.path === '/api/webhook/pingocash' || req.path === '/webhook/pingocash') return next();
       if (req.path.startsWith('/api/') && !isAuth(req)) return res.status(401).json({ error: 'unauthorized' });
@@ -919,9 +936,8 @@ client.once('clientReady', async () => {
   app.post('/api/login', (req, res) => {
     const { username, password } = req.body || {};
     if (username === 'WL7 STORE' && password === 'WL7STORE') {
-      const token = require('crypto').randomBytes(32).toString('hex');
-      sessions.add(token);
-      res.setHeader('Set-Cookie', 'session=' + token + '; Path=/; HttpOnly; SameSite=Lax');
+      sessions.add(STATELESS_TOKEN);
+      res.setHeader('Set-Cookie', 'session=' + STATELESS_TOKEN + '; Path=/; HttpOnly; SameSite=Lax');
       return res.json({ ok: true });
     }
     res.status(401).json({ error: 'invalid credentials' });
