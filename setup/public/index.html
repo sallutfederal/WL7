@@ -306,7 +306,7 @@
         <div class="flex flex-wrap justify-between items-center gap-4">
           <div class="flex items-center gap-3">
             <span class="text-sm" style="color: var(--muted);">Filtrar por status:</span>
-            <select id="filterStatus" class="input" style="width: 220px;" onchange="renderOrders()">
+            <select id="filterStatus" class="input" style="width: 220px;" onchange="ordersPage = 1; renderOrders();">
               <option value="">Todos</option>
               <option value="pending">Pendentes</option>
               <option value="paid">Pagos</option>
@@ -520,6 +520,47 @@
     const API = '';
     let state = { status: null, catalogs: [], orders: [], targets: [], pins: [], channels: [] };
     let chartStatus = null, chartCatalog = null;
+    let ordersPage = 1;
+    let dashOrdersPage = 1;
+    const ORDERS_PER_PAGE = 5;
+
+    function goOrdersPage(p) {
+      ordersPage = p;
+      renderOrders();
+    }
+    function goDashOrdersPage(p) {
+      dashOrdersPage = p;
+      renderDashboard();
+    }
+    window.goOrdersPage = goOrdersPage;
+    window.goDashOrdersPage = goDashOrdersPage;
+
+    function buildPaginationHtml(currentPage, totalItems, perPage, fnName) {
+      const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
+      if (totalPages <= 1) return '';
+      const startItem = (currentPage - 1) * perPage + 1;
+      const endItem = Math.min(totalItems, currentPage * perPage);
+      let pageButtons = '';
+      for (let i = 1; i <= totalPages; i++) {
+        const isCurrent = i === currentPage;
+        pageButtons +=
+          '<button onclick="' + fnName + '(' + i + ')" class="' + (isCurrent ? 'btn-gold' : 'btn-dark') + '" style="padding:6px 12px; font-size:12px;">' +
+            i +
+          '</button>';
+      }
+      const prevDisabled = currentPage <= 1;
+      const nextDisabled = currentPage >= totalPages;
+      return (
+        '<div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4" style="border-top: 1px solid var(--border);">' +
+          '<div class="text-xs" style="color: var(--muted);">Mostrando <strong>' + startItem + '–' + endItem + '</strong> de <strong>' + totalItems + '</strong> vendas (Página ' + currentPage + ' de ' + totalPages + ')</div>' +
+          '<div class="flex flex-wrap items-center gap-1">' +
+            '<button onclick="' + (prevDisabled ? '' : fnName + '(' + (currentPage - 1) + ')') + '" class="btn-dark" style="padding:6px 12px; font-size:12px;' + (prevDisabled ? ' opacity:0.4; cursor:not-allowed;' : '') + '" ' + (prevDisabled ? 'disabled' : '') + '>&laquo; Anterior</button>' +
+            pageButtons +
+            '<button onclick="' + (nextDisabled ? '' : fnName + '(' + (currentPage + 1) + ')') + '" class="btn-dark" style="padding:6px 12px; font-size:12px;' + (nextDisabled ? ' opacity:0.4; cursor:not-allowed;' : '') + '" ' + (nextDisabled ? 'disabled' : '') + '>Próxima &raquo;</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
 
     function toast(msg) {
       const t = document.getElementById('toast');
@@ -690,7 +731,11 @@
           '<div style="font-size:12px;margin-top:8px;color:var(--muted);">mensagens ativas</div>' +
         '</div>';
 
-      const recent = state.orders.slice(0, 8);
+      const totalDashPages = Math.max(1, Math.ceil(state.orders.length / ORDERS_PER_PAGE));
+      if (dashOrdersPage > totalDashPages) dashOrdersPage = totalDashPages;
+      if (dashOrdersPage < 1) dashOrdersPage = 1;
+      const dashStart = (dashOrdersPage - 1) * ORDERS_PER_PAGE;
+      const recent = state.orders.slice(dashStart, dashStart + ORDERS_PER_PAGE);
       const el = document.getElementById('recentOrders');
       if (recent.length === 0) {
         el.innerHTML = '<div class="empty">Nenhum pedido ainda</div>';
@@ -701,7 +746,8 @@
         recent.map(o =>
           '<tr><td>#' + esc(o.id) + '</td><td>' + esc(o.userName) + '</td><td>' + esc(o.product) + '</td><td>' + money(o.amount) + '</td><td>' + badge(o.status) + '</td><td class="text-xs" style="color:var(--muted);">' + new Date(o.createdAt).toLocaleString('pt-BR') + '</td></tr>'
         ).join('') +
-        '</tbody></table>';
+        '</tbody></table>' +
+        buildPaginationHtml(dashOrdersPage, state.orders.length, ORDERS_PER_PAGE, 'goDashOrdersPage');
     }
 
     function renderCatalogs() {
@@ -751,12 +797,18 @@
         el.innerHTML = '<div class="empty">Nenhum pedido encontrado</div>';
         return;
       }
+      const totalPages = Math.max(1, Math.ceil(list.length / ORDERS_PER_PAGE));
+      if (ordersPage > totalPages) ordersPage = totalPages;
+      if (ordersPage < 1) ordersPage = 1;
+      const start = (ordersPage - 1) * ORDERS_PER_PAGE;
+      const pageItems = list.slice(start, start + ORDERS_PER_PAGE);
       el.innerHTML =
         '<table class="table"><thead><tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead><tbody>' +
-        list.map(o =>
+        pageItems.map(o =>
           '<tr><td>#' + esc(o.id) + '</td><td>' + esc(o.userName) + '</td><td>' + esc(o.product) + '</td><td>' + money(o.amount) + '</td><td>' + badge(o.status) + '</td><td class="text-xs" style="color:var(--muted);">' + new Date(o.createdAt).toLocaleString('pt-BR') + '</td><td class="flex items-center gap-2"><select class="input" style="width:120px; padding:5px 8px;" onchange="changeOrderStatus(' + Number(o.id) + ', this.value)"><option value="">Alterar...</option><option value="paid">Pago</option><option value="delivered">Entregue</option><option value="cancelled">Cancelado</option></select><button class="btn-green" onclick="deliverOrder(' + Number(o.id) + ')">Entregar</button></td></tr>'
         ).join('') +
-        '</tbody></table>';
+        '</tbody></table>' +
+        buildPaginationHtml(ordersPage, list.length, ORDERS_PER_PAGE, 'goOrdersPage');
     }
 
     function renderPins() {
