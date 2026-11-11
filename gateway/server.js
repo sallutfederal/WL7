@@ -78,4 +78,8 @@ app.post('/webhook/pingocash', (req, res) => {
 // list recent webhook events
 app.get('/events', (req, res) => res.json({ ok: true, events: global.__events || [] }));
 
-app.listen(PORT, () => console.log('gateway listening on port ' + PORT));
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => console.log('gateway listening on port ' + PORT));
+}
+
+module.exports = app;

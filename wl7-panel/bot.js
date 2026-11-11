@@ -5,7 +5,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 require('dotenv').config({ path: path.join(__dirname, '..', 'setup', '.env') });
 require('dotenv').config({ path: path.join(__dirname, '..', 'gateway', '.env') });
 
-const pc = require('../gateway/pingocash');
+const pc = fs.existsSync(path.join(__dirname, 'pingocash.js')) ? require('./pingocash') : require('../gateway/pingocash');
 const {
   Client, GatewayIntentBits, Partials, REST, Routes,
   SlashCommandBuilder, EmbedBuilder, ActionRowBuilder,
@@ -463,7 +463,8 @@ function startBot() {
   setInterval(async () => {
     cfg = loadConfig();
     try {
-      const res = await fetch('http://localhost:' + (process.env.GATEWAY_PORT || 3001) + '/events');
+      const gatewayBase = process.env.GATEWAY_URL || ('http://localhost:' + (process.env.GATEWAY_PORT || 3001));
+      const res = await fetch(new URL('/events', gatewayBase));
       if (res.ok) {
         const json = await res.json();
         const events = (json && json.events) || [];

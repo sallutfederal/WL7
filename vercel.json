@@ -1,0 +1,51 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "gateway": {
+      "root": "gateway",
+      "framework": "express",
+      "entrypoint": "server.js"
+    },
+    "setup": {
+      "root": "setup",
+      "framework": "express",
+      "entrypoint": "index.js",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "gateway",
+          "format": "url",
+          "env": "GATEWAY_URL"
+        }
+      ]
+    },
+    "wl7-panel": {
+      "root": "wl7-panel",
+      "framework": "nextjs",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "setup",
+          "format": "url",
+          "env": "SETUP_URL"
+        },
+        {
+          "type": "service",
+          "service": "gateway",
+          "format": "url",
+          "env": "GATEWAY_URL"
+        }
+      ]
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/webhook/pingocash",
+      "destination": { "service": "gateway" }
+    },
+    {
+      "source": "/(.*)",
+      "destination": { "service": "wl7-panel" }
+    }
+  ]
+}

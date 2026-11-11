@@ -15,3 +15,4 @@ services:
         value: whsec_1cc2d187a235bd1478f9ccffd7b18f27b1186bebfd2f481f
       - key: PINGO_BASE_URL
         value: https://api.pingocash.com.br/api/v1
+

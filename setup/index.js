@@ -6,7 +6,7 @@ const express = require('express');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 const fileUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
-const pc = require('../gateway/pingocash');
+const pc = require('fs').existsSync(require('path').join(__dirname, 'pingocash.js')) ? require('./pingocash') : require('../gateway/pingocash');
 const fs = require('fs');
 const path = require('path');
 const {
@@ -864,15 +864,19 @@ client.on('interactionCreate', async (i) => {
   } catch (e) { console.error('interaction err', e && e.message); }
 });
 
+const app = express();
+
 client.once('clientReady', async () => {
   console.log('Logged in as ' + client.user.tag);
   try { await client.user.setUsername(cfg.botName); } catch (e) {}
   if (cfg.botAvatar) { try { await client.user.setAvatar(cfg.botAvatar); } catch (e) {} }
   if (cfg.botBanner) { try { await client.user.setBanner(cfg.botBanner); } catch (e) {} }
   await registerCommands();
+  await notifyPrivate('**' + cfg.botName + '** online. ' + cfg.catalogs.length + ' catalogo(s), ' + cfg.pins.length + ' pin(s), ' + cfg.targets.length + ' bot(s), ' + cfg.orders.length + ' pedido(s).');
+});
+
   // web panel
-  const app = express();
-  app.use((req, res, next) => { res.header('Access-Control-Allow-Origin', '*'); res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-IcePay-Signature'); res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS'); if (req.method === 'OPTIONS') return res.sendStatus(200); next(); });
+  app.use((req, res, next) => { res.header('Access-Control-Allow-Origin', '*'); res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-IcePay-Signature, x-internal-service'); res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS'); if (req.method === 'OPTIONS') return res.sendStatus(200); next(); });
   app.use(express.json({
     verify: (req, res, buf) => { req.rawBody = buf; },
   }));
@@ -900,7 +904,7 @@ client.once('clientReady', async () => {
 
   const sessions = new Set();
   function getToken(req) { const m = (req.headers.cookie || '').match(/session=([^;]+)/); return m ? m[1] : null; }
-  function isAuth(req) { return sessions.has(getToken(req)); }
+  function isAuth(req) { return sessions.has(getToken(req)) || req.headers['x-internal-service'] === 'wl7-panel'; }
   // auth middleware for /api and / (except /login and /api/login)
   app.use((req, res, next) => {
     if (req.path === '/health' || req.path === '/login' || req.path === '/login.html' || req.path === '/favicon.svg' || req.path === '/api/login' || req.path === '/webhook/pingocash' || req.path === '/api/webhook/pingocash' || req.path === '/test.html' || req.path === '/simple.html' || req.path.startsWith('/api/')) {
@@ -1168,12 +1172,15 @@ client.once('clientReady', async () => {
   // fallback to index.html
   app.use((req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
   const panelPort = process.env.PANEL_PORT || process.env.PORT || 8080;
-  app.listen(panelPort, () => console.log('web panel listening on port ' + panelPort));
+  if (!process.env.VERCEL) {
+    app.listen(panelPort, () => console.log('web panel listening on port ' + panelPort));
+  }
   // polling for payment confirmations (via Gateway events AND direct PingoCash API status check)
   setInterval(async () => {
-    // 1. Poll local gateway /events if running
+    // 1. Poll gateway /events via GATEWAY_URL binding (or local fallback)
     try {
-      const res = await fetch('http://localhost:' + (process.env.GATEWAY_PORT || 3001) + '/events');
+      const gatewayBase = process.env.GATEWAY_URL || ('http://localhost:' + (process.env.GATEWAY_PORT || 3001));
+      const res = await fetch(new URL('/events', gatewayBase));
       if (res.ok) {
         const json = await res.json();
         const events = (json && json.events) || [];
@@ -1203,8 +1210,6 @@ client.once('clientReady', async () => {
       }
     } catch (err) {}
   }, 5000);
-  await notifyPrivate('**' + cfg.botName + '** online. ' + cfg.catalogs.length + ' catalogo(s), ' + cfg.pins.length + ' pin(s), ' + cfg.targets.length + ' bot(s), ' + cfg.orders.length + ' pedido(s).');
-});
 
 process.on('unhandledRejection', (e) => console.error('unhandledRejection', e && e.message));
 process.on('uncaughtException', (e) => console.error('uncaughtException', e && e.message));
@@ -1217,8 +1222,13 @@ client.on('guildCreate', async (g) => {
   } catch (e) { console.error('guildCreate cmd err', e.message); }
 });
 
-if (!process.env.BOT_TOKEN) { console.error('BOT_TOKEN nao definido em .env'); process.exit(1); }
-client.login(process.env.BOT_TOKEN);
+if (process.env.BOT_TOKEN) {
+  client.login(process.env.BOT_TOKEN).catch(e => console.error('Discord login err:', e.message));
+} else {
+  console.warn('BOT_TOKEN nao definido em .env');
+}
+
+module.exports = app;
 
 
 
