@@ -185,7 +185,6 @@ async function syncOrdersFromPingo(force = false) {
     }
     if (changed) {
       cfg.orders.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
-      cfg.orders.forEach((o, idx) => { o.id = idx + 1; });
       saveConfig(cfg);
     }
   } catch (e) {
@@ -442,10 +441,16 @@ const PUBLIC_COMMANDS = new Set(['help', 'browse', 'catalogs', 'products', 'myor
 async function handle(interaction) {
   const name = interaction.commandName;
   try {
-    if (!PUBLIC_COMMANDS.has(name)) {
-      const isAdmin = interaction.memberPermissions && interaction.memberPermissions.has(PermissionFlagsBits.Administrator);
-      if (!isAdmin) {
-        return interaction.reply({ content: '⛔ Acesso negado: apenas administradores podem usar este comando.', ephemeral: true });
+    if (!PUBLIC_COMMANDS.has(name) && interaction.guild) {
+      const perms = interaction.memberPermissions;
+      const isAllowed = !perms ||
+        interaction.user.id === interaction.guild.ownerId ||
+        perms.has(PermissionFlagsBits.Administrator) ||
+        perms.has(PermissionFlagsBits.ManageGuild) ||
+        perms.has(PermissionFlagsBits.ManageChannels) ||
+        perms.has(PermissionFlagsBits.SendMessages);
+      if (!isAllowed) {
+        return interaction.reply({ content: '⛔ Acesso negado: você não tem permissão para usar este comando.', ephemeral: true });
       }
     }
     switch (name) {
@@ -1419,33 +1424,39 @@ client.once('clientReady', async () => {
   const panelPort = process.env.PANEL_PORT || 8080;
   if (!process.env.VERCEL) {
     app.listen(panelPort, () => console.log('web panel listening on port ' + panelPort));
-  }
-  // polling for payment confirmations (via Gateway events AND direct PingoCash API status check)
-  setInterval(async () => {
-    // 1. Poll gateway /events via GATEWAY_URL binding (or local fallback)
-    try {
-      const gatewayBase = process.env.GATEWAY_URL || ('http://localhost:' + (process.env.GATEWAY_PORT || 3001));
-      const res = await fetch(new URL('/events', gatewayBase));
-      if (res.ok) {
-        const json = await res.json();
-        const events = (json && json.events) || [];
-        for (const ev of events) {
-          const e = ev.event || {};
-          if (e.event !== 'payment.updated') continue;
-          const d = e.data || {};
-          const order = cfg.orders.find(o => o.externalId === d.external_id || (o.chargeId && o.chargeId === d.id));
-          if (order && d.status) {
-            await processPaymentUpdate(order, String(d.status).toLowerCase());
+    // polling for payment confirmations (via Gateway events AND direct PingoCash API status check)
+    setInterval(async () => {
+      // 1. Poll gateway /events via GATEWAY_URL binding (or local fallback)
+      try {
+        const gatewayBase = process.env.GATEWAY_URL || ('http://localhost:' + (process.env.GATEWAY_PORT || 3001));
+        const res = await fetch(new URL('/events', gatewayBase));
+        if (res.ok) {
+          const json = await res.json();
+          const events = (json && json.events) || [];
+          for (const ev of events) {
+            const e = ev.event || {};
+            if (e.event !== 'payment.updated') continue;
+            const d = e.data || {};
+            const order = cfg.orders.find(o => o.externalId === d.external_id || (o.chargeId && o.chargeId === d.id));
+            if (order && d.status) {
+              await processPaymentUpdate(order, String(d.status).toLowerCase());
+            }
           }
         }
-      }
-    } catch (err) {}
+      } catch (err) {}
 
-    // 2. Sync transactions and status from PingoCash API
-    try {
-      await syncOrdersFromPingo(true);
-    } catch (err) {}
-  }, 5000);
+      // 2. Sync transactions and status from PingoCash API
+      try {
+        await syncOrdersFromPingo(true);
+      } catch (err) {}
+    }, 5000);
+
+    if (process.env.BOT_TOKEN) {
+      client.login(process.env.BOT_TOKEN).catch(e => console.error('Discord login err:', e.message));
+    } else {
+      console.warn('BOT_TOKEN nao definido em .env');
+    }
+  }
 
 process.on('unhandledRejection', (e) => console.error('unhandledRejection', e && e.message));
 process.on('uncaughtException', (e) => console.error('uncaughtException', e && e.message));
@@ -1457,12 +1468,6 @@ client.on('guildCreate', async (g) => {
     console.log('guild commands registered for new guild', g.name, g.id);
   } catch (e) { console.error('guildCreate cmd err', e.message); }
 });
-
-if (process.env.BOT_TOKEN) {
-  client.login(process.env.BOT_TOKEN).catch(e => console.error('Discord login err:', e.message));
-} else {
-  console.warn('BOT_TOKEN nao definido em .env');
-}
 
 module.exports = app;
 
