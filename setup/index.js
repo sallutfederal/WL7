@@ -52,12 +52,21 @@ const DEFAULT_CONFIG = {
   privateWebhook: process.env.PRIVATE_WEBHOOK || '',
 };
 
+let BUNDLED_CONFIG = null;
+try { BUNDLED_CONFIG = require('./config.json'); } catch (e) {}
+
 function loadConfig() {
   try {
     const file = getReadableConfigFile();
+    let parsed = null;
     if (fs.existsSync(file)) {
       const raw = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '');
-      const c = { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
+      parsed = JSON.parse(raw);
+    } else if (BUNDLED_CONFIG) {
+      parsed = JSON.parse(JSON.stringify(BUNDLED_CONFIG));
+    }
+    if (parsed) {
+      const c = { ...DEFAULT_CONFIG, ...parsed };
       if (Array.isArray(c.products) && c.products.length && !c.catalogs) {
         c.catalogs = [{ name: 'geral', description: '', intro: '', products: c.products }];
         delete c.products;
@@ -90,6 +99,100 @@ function saveConfig(cfg) {
 
 let cfg = loadConfig();
 if (!cfg.privateWebhook && process.env.PRIVATE_WEBHOOK) cfg.privateWebhook = process.env.PRIVATE_WEBHOOK;
+
+let lastPingoSyncAt = 0;
+async function syncOrdersFromPingo(force = false) {
+  const now = Date.now();
+  if (!force && now - lastPingoSyncAt < 3000) return cfg.orders;
+  lastPingoSyncAt = now;
+  try {
+    if (typeof pc.getBalance === 'function') {
+      const bal = await pc.getBalance().catch(() => null);
+      if (bal && bal.balance !== undefined) cfg.walletBalance = Number(bal.balance);
+    }
+    if (typeof pc.listTransactions !== 'function') return cfg.orders;
+    const txs = await pc.listTransactions(50, 0);
+    if (!Array.isArray(txs) || txs.length === 0) return cfg.orders;
+    let changed = false;
+    // Process from oldest to newest so IDs are chronological
+    const chronological = txs.slice().reverse();
+    for (const tx of chronological) {
+      if (!tx || (!tx.id && !tx.external_id)) continue;
+      const rawStatus = String(tx.status || 'pending').toLowerCase();
+      const normStatus = (rawStatus === 'paid' || rawStatus === 'completed' || rawStatus === 'approved')
+        ? 'paid'
+        : ((rawStatus === 'cancelled' || rawStatus === 'expired' || rawStatus === 'failed') ? rawStatus : 'pending');
+
+      const existing = cfg.orders.find(o =>
+        (tx.id && o.chargeId && String(o.chargeId) === String(tx.id)) ||
+        (tx.external_id && o.externalId && String(o.externalId) === String(tx.external_id))
+      );
+
+      if (existing) {
+        if (!existing.chargeId && tx.id) { existing.chargeId = tx.id; changed = true; }
+        if (tx.amount !== undefined && Number(tx.amount) > 0 && existing.amount !== Number(tx.amount)) {
+          existing.amount = Number(tx.amount);
+          changed = true;
+        }
+        if (tx.payer_name && (!existing.userName || existing.userName === 'Cliente' || existing.userName === 'Cliente PIX')) {
+          existing.userName = tx.payer_name;
+          changed = true;
+        }
+        if (normStatus === 'paid' && existing.status !== 'paid' && existing.status !== 'delivered') {
+          existing.status = 'paid';
+          existing.paidAt = tx.paid_at || existing.paidAt || new Date().toISOString();
+          changed = true;
+        } else if ((normStatus === 'cancelled' || normStatus === 'expired') && existing.status === 'pending') {
+          existing.status = normStatus;
+          changed = true;
+        }
+      } else {
+        const desc = String(tx.description || '').trim();
+        let product = desc || 'Cobrança PIX';
+        let catalog = 'pix';
+        const mPedido = desc.match(/Pagamento do pedido\s+(.+?)\s*\(([^)]+)\)/i);
+        const mCheckout = desc.match(/Venda checkout:\s*(.+)/i);
+        if (mPedido) {
+          product = mPedido[1].trim();
+          catalog = mPedido[2].trim();
+        } else if (mCheckout) {
+          product = mCheckout[1].trim();
+          catalog = 'checkout';
+        } else if (desc.toLowerCase().includes('depósito') || desc.toLowerCase().includes('deposito')) {
+          product = desc;
+          catalog = 'deposito';
+        }
+        const nextId = cfg.orders.reduce((max, o) => Math.max(max, Number(o.id) || 0), 0) + 1;
+        cfg.orders.push({
+          id: nextId,
+          externalId: tx.external_id || tx.id,
+          chargeId: tx.id || null,
+          copyPaste: '',
+          userId: '',
+          userName: tx.payer_name || (tx.external_id && String(tx.external_id).startsWith('pedido_') ? 'Cliente Discord' : 'Cliente PIX'),
+          catalog,
+          product,
+          amount: Number(tx.amount || 0),
+          fee: Number(tx.fee || 0),
+          netAmount: Number(tx.net_amount || tx.amount || 0),
+          status: normStatus,
+          createdAt: tx.created_at || new Date().toISOString(),
+          paidAt: tx.paid_at || (normStatus === 'paid' ? new Date().toISOString() : null),
+          deliveredAt: null,
+        });
+        changed = true;
+      }
+    }
+    if (changed) {
+      cfg.orders.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+      cfg.orders.forEach((o, idx) => { o.id = idx + 1; });
+      saveConfig(cfg);
+    }
+  } catch (e) {
+    console.error('syncOrdersFromPingo err:', e.message);
+  }
+  return cfg.orders;
+}
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds], partials: [Partials.Channel, Partials.Message] });
 
@@ -1046,7 +1149,29 @@ client.once('clientReady', async () => {
   app.get('/login', (req, res) => res.sendFile(require('path').join(__dirname, 'public', 'login.html')));
   app.use(express.static(path.join(__dirname, 'public')));
   // API endpoints
-  app.get('/api/status', (req, res) => res.json({ botName: cfg.botName, currency: cfg.currency, botAvatar: cfg.botAvatar, botBanner: cfg.botBanner, catalogs: cfg.catalogs.length, products: cfg.catalogs.reduce((a,c)=>a+(c.products?c.products.length:0),0), orders: cfg.orders.length, targets: cfg.targets.length, pins: cfg.pins.length, pendingOrders: cfg.orders.filter(o=>o.status==='pending').length, paidOrders: cfg.orders.filter(o=>o.status==='paid'||o.status==='delivered').length, revenue: cfg.orders.filter(o=>o.status==='paid'||o.status==='delivered').reduce((a,o)=>a+o.amount,0) }));
+  app.get('/api/status', async (req, res) => {
+    await syncOrdersFromPingo();
+    const paidList = cfg.orders.filter(o => o.status === 'paid' || o.status === 'delivered');
+    const pendingList = cfg.orders.filter(o => o.status === 'pending');
+    const revenue = paidList.reduce((a, o) => a + Number(o.amount || 0), 0);
+    const pendingRevenue = pendingList.reduce((a, o) => a + Number(o.amount || 0), 0);
+    res.json({
+      botName: cfg.botName,
+      currency: cfg.currency,
+      botAvatar: cfg.botAvatar,
+      botBanner: cfg.botBanner,
+      catalogs: cfg.catalogs.length,
+      products: cfg.catalogs.reduce((a, c) => a + (c.products ? c.products.length : 0), 0),
+      orders: cfg.orders.length,
+      targets: cfg.targets.length,
+      pins: cfg.pins.length,
+      pendingOrders: pendingList.length,
+      paidOrders: paidList.length,
+      revenue,
+      pendingRevenue,
+      walletBalance: cfg.walletBalance !== undefined ? cfg.walletBalance : 0,
+    });
+  });
   app.get('/api/catalogs', (req, res) => res.json(cfg.catalogs));
   app.post('/api/catalogs', (req, res) => {
     const { name, description } = req.body || {};
@@ -1103,7 +1228,10 @@ client.once('clientReady', async () => {
     refreshPinsForCatalog(cat.name).catch(()=>{});
     res.json({ ok: true });
   });
-  app.get('/api/orders', (req, res) => res.json(cfg.orders.slice().reverse()));
+  app.get('/api/orders', async (req, res) => {
+    await syncOrdersFromPingo();
+    res.json(cfg.orders.slice().reverse());
+  });
   app.put('/api/orders/:id/status', (req, res) => {
     const order = cfg.orders.find(o => o.id === Number(req.params.id));
     if (!order) return res.status(404).json({ error: 'not found' });
@@ -1288,7 +1416,7 @@ client.once('clientReady', async () => {
   });
   // fallback to index.html
   app.use((req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-  const panelPort = process.env.PANEL_PORT || process.env.PORT || 8080;
+  const panelPort = process.env.PANEL_PORT || 8080;
   if (!process.env.VERCEL) {
     app.listen(panelPort, () => console.log('web panel listening on port ' + panelPort));
   }
@@ -1313,18 +1441,9 @@ client.once('clientReady', async () => {
       }
     } catch (err) {}
 
-    // 2. Active status check on PingoCash API for recent pending orders
+    // 2. Sync transactions and status from PingoCash API
     try {
-      const pending = cfg.orders.filter(o => o.status === 'pending' && (o.chargeId || o.externalId));
-      for (const order of pending.slice(-10)) {
-        try {
-          const r = await pc.getCharge(order.chargeId || order.externalId);
-          const d = (r && r.data) ? r.data : r;
-          if (d && d.status && d.status !== 'pending') {
-            await processPaymentUpdate(order, String(d.status).toLowerCase());
-          }
-        } catch (err) {}
-      }
+      await syncOrdersFromPingo(true);
     } catch (err) {}
   }, 5000);
 

@@ -530,6 +530,8 @@
 
     async function api(path, opts = {}) {
       const r = await fetch(API + path, {
+        credentials: 'same-origin',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         ...opts,
         body: opts.body ? JSON.stringify(opts.body) : undefined,
@@ -677,7 +679,7 @@
         '</div>' +
         '<div class="card" style="background: linear-gradient(135deg, rgba(234,179,8,.12), var(--bg2)); border: 1px solid var(--yellow);">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pendentes</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--yellow);">' + state.status.pendingOrders + '</div></div><div style="font-size:22px;color:var(--yellow);"><i class="fa-solid fa-clock"></i></div></div>' +
-          '<div style="font-size:12px;margin-top:8px;color:var(--muted);">aguardando PIX</div>' +
+          '<div style="font-size:12px;margin-top:8px;color:var(--yellow);">' + money(state.status.pendingRevenue || 0) + ' aguardando PIX</div>' +
         '</div>' +
         '<div class="card" style="background: linear-gradient(135deg, rgba(212,175,55,.12), var(--bg2)); border: 1px solid var(--accent);">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Bots</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--accent2);">' + state.status.targets + '</div></div><div style="font-size:22px;color:var(--accent2);"><i class="fa-solid fa-robot"></i></div></div>' +
@@ -836,30 +838,42 @@
         },
       });
 
-      const catMap = {};
+      const paidMap = {};
+      const pendingMap = {};
       for (const o of state.orders) {
+        const cat = o.catalog || 'pix';
         if (o.status === 'paid' || o.status === 'delivered') {
-          catMap[o.catalog] = (catMap[o.catalog] || 0) + Number(o.amount || 0);
+          paidMap[cat] = (paidMap[cat] || 0) + Number(o.amount || 0);
+        } else if (o.status === 'pending') {
+          pendingMap[cat] = (pendingMap[cat] || 0) + Number(o.amount || 0);
         }
       }
-      const cats = Object.keys(catMap);
+      const cats = Array.from(new Set([...Object.keys(paidMap), ...Object.keys(pendingMap)]));
       const ctx2 = document.getElementById('chartCatalog');
       if (chartCatalog) chartCatalog.destroy();
       chartCatalog = new Chart(ctx2, {
         type: 'bar',
         data: {
-          labels: cats.length ? cats : ['Sem vendas pagas'],
-          datasets: [{
-            label: 'Receita',
-            data: cats.length ? cats.map(c => catMap[c]) : [0],
-            backgroundColor: '#d4af37',
-            borderRadius: 8,
-          }],
+          labels: cats.length ? cats : ['Sem vendas'],
+          datasets: [
+            {
+              label: 'Pago',
+              data: cats.length ? cats.map(c => paidMap[c] || 0) : [0],
+              backgroundColor: '#22c55e',
+              borderRadius: 6,
+            },
+            {
+              label: 'Pendente (Teste)',
+              data: cats.length ? cats.map(c => pendingMap[c] || 0) : [0],
+              backgroundColor: '#d4af37',
+              borderRadius: 6,
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: { legend: { display: true, labels: { color: '#8a8a95' } } },
           scales: {
             x: { ticks: { color: '#8a8a95' }, grid: { color: 'rgba(255,255,255,0.05)' } },
             y: { ticks: { color: '#8a8a95' }, grid: { color: 'rgba(255,255,255,0.05)' } },

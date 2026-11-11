@@ -108,6 +108,16 @@ async function getCharge(idOrExternalId) {
   }
 }
 
+async function listTransactions(limit = 50, offset = 0) {
+  const raw = await request('GET', '/transactions?limit=' + Number(limit || 50) + '&offset=' + Number(offset || 0));
+  return (raw && Array.isArray(raw.data)) ? raw.data : (Array.isArray(raw) ? raw : []);
+}
+
+async function getBalance() {
+  const raw = await request('GET', '/balance');
+  return (raw && raw.data) ? raw.data : raw;
+}
+
 // Validate webhook signature (Header X-IcePay-Signature)
 const DEFAULT_WEBHOOK_SECRET = 'whsec_1cc2d187a235bd1478f9ccffd7b18f27b1186bebfd2f481f';
 function verifyWebhookSignature(rawBody, signature, secret = process.env.PINGO_WEBHOOK_SECRET || DEFAULT_WEBHOOK_SECRET) {
@@ -123,4 +133,4 @@ function verifyWebhookSignature(rawBody, signature, secret = process.env.PINGO_W
   }
 }
 
-module.exports = { BASE_URL, getApiKey, authHeaders, testCredentials, createCharge, getCharge, verifyWebhookSignature };
+module.exports = { BASE_URL, getApiKey, authHeaders, testCredentials, createCharge, getCharge, listTransactions, getBalance, verifyWebhookSignature };
