@@ -18,12 +18,26 @@ const {
 
 const CONFIG_FILE = path.join(__dirname, 'config.json');
 const DEFAULT_CATALOGS = ['laras', 'infocc', 'btmob', 'consul'];
+const DEFAULT_PRODUCTS = {
+  btmob: [
+    { name: '1  SEMANA', price: 390, description: '', stock: -1 },
+    { name: '15 DIAS', price: 700, description: '', stock: -1 },
+    { name: '1 MES', price: 1100, description: '', stock: -1 },
+    { name: 'VITALICIO', price: 1900, description: '', stock: -1 },
+  ],
+  laras: [
+    { name: 'ZAMPAY', price: 120, description: '', stock: 5 },
+    { name: 'CORPX', price: 100, description: '', stock: 3 },
+    { name: 'MYSTICPAY', price: 120, description: '', stock: 16 },
+    { name: 'SUMUP', price: 120, description: '', stock: 1 },
+  ],
+};
 const DEFAULT_CONFIG = {
-  botName: 'SetupBot',
+  botName: 'WL7 STORE',
   botAvatar: '',
   botBanner: '',
   currency: 'BRL',
-  catalogs: DEFAULT_CATALOGS.map(n => ({ name: n, description: '', intro: '', products: [] })),
+  catalogs: DEFAULT_CATALOGS.map(n => ({ name: n, description: '', intro: '', products: DEFAULT_PRODUCTS[n] || [] })),
   orders: [],
   announces: [],
   targets: [],
