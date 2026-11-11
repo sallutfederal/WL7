@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: wl7-store-bot
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: PINGO_API_KEY
+        value: lp_535c04ed50234257a4ba5de5
+      - key: PINGO_WEBHOOK_SECRET
+        value: whsec_1cc2d187a235bd1478f9ccffd7b18f27b1186bebfd2f481f
+      - key: PINGO_BASE_URL
+        value: https://api.pingocash.com.br/api/v1

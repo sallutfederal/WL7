@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WL7 STORE — Painel de Controle</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg2: #14141a;
+      --bg3: #1e1e26;
+      --border: #2a2a35;
+      --text: #e8e8e8;
+      --muted: #8a8a95;
+      --accent: #d4af37;
+      --accent2: #ffd700;
+      --green: #22c55e;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --yellow: #eab308;
+    }
+    body.light-mode {
+      --bg: #f5f5f7;
+      --bg2: #ffffff;
+      --bg3: #ececee;
+      --border: #d8d8dc;
+      --text: #1a1a1a;
+      --muted: #6b6b70;
+      --accent: #9a7a18;
+      --accent2: #b8860b;
+      --green: #16a34a;
+      --red: #dc2626;
+      --blue: #2563eb;
+      --yellow: #ca8a04;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 260px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 16px;
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .nav-link:hover {
+      background: var(--bg3);
+      color: var(--text);
+    }
+    .nav-link.active {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(255, 215, 0, 0.08));
+      color: var(--accent2);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+    }
+    .main-area {
+      margin-left: 260px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .topbar {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .view { display: none; }
+    .view.active { display: block; }
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+    .input:focus { border-color: var(--accent2); }
+    .btn-gold {
+      background: linear-gradient(135deg, #b8941f, #ffd700);
+      color: #000;
+      font-weight: 600;
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      border: none;
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+    .btn-gold:hover { filter: brightness(1.1); }
+    .btn-dark {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-dark:hover { border-color: var(--accent); }
+    .btn-red {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #ef4444;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-red:hover { background: #ef4444; color: #fff; }
+    .btn-green {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #22c55e;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-green:hover { background: #22c55e; color: #000; }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .table th {
+      text-align: left;
+      padding: 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+    }
+    .table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .badge {
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-pending { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); }
+    .badge-paid { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); }
+    .badge-delivered { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+    .badge-cancelled, .badge-expired { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .empty {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .modal-bg {
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(4px);
+    }
+    .text-accent { color: var(--accent2); }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar p-6">
+    <div class="text-center pb-6 mb-6" style="border-bottom: 1px solid var(--border);">
+      <div class="text-4xl mb-2">🐺</div>
+      <h1 id="botNameTop" class="text-lg font-extrabold tracking-wider" style="color: var(--accent2);">WL7 STORE</h1>
+      <p class="text-xs uppercase tracking-widest mt-1" style="color: var(--muted);">Painel de Controle</p>
+    </div>
+
+    <nav class="space-y-1 flex-1">
+      <a href="#" data-view="dashboard" class="nav-link active"><i class="fa-solid fa-chart-pie w-5 text-center"></i> Dashboard</a>
+      <a href="#" data-view="catalogs" class="nav-link"><i class="fa-solid fa-box-archive w-5 text-center"></i> Catálogos</a>
+      <a href="#" data-view="products" class="nav-link"><i class="fa-solid fa-cart-shopping w-5 text-center"></i> Produtos</a>
+      <a href="#" data-view="orders" class="nav-link"><i class="fa-solid fa-receipt w-5 text-center"></i> Pedidos</a>
+      <a href="#" data-view="pins" class="nav-link"><i class="fa-solid fa-thumbtack w-5 text-center"></i> Mensagens Fixas</a>
+      <a href="#" data-view="bots" class="nav-link"><i class="fa-solid fa-robot w-5 text-center"></i> Bots / Webhooks</a>
+      <a href="#" data-view="settings" class="nav-link"><i class="fa-solid fa-gear w-5 text-center"></i> Configurações</a>
+    </nav>
+
+    <div class="pt-4 space-y-2" style="border-top: 1px solid var(--border);">
+      <button class="btn-gold w-full flex items-center justify-center gap-2" onclick="openAnnounceModal()">
+        <i class="fa-solid fa-bullhorn"></i> Anunciar Catálogo
+      </button>
+      <button id="themeToggle" class="btn-dark w-full" onclick="toggleTheme()">Modo claro</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-area">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div>
+        <h2 id="viewTitle" class="text-2xl font-bold" style="color: var(--accent2);">Dashboard</h2>
+      </div>
+      <div class="flex items-center gap-6 text-xs">
+        <div><span style="color: var(--muted);">Receita:</span> <strong id="tRevenue" style="color: var(--accent2);">R$ 0,00</strong></div>
+        <div><span style="color: var(--muted);">Pagos:</span> <strong id="tPaid" style="color: var(--green);">0</strong></div>
+        <div><span style="color: var(--muted);">Pendentes:</span> <strong id="tPending" style="color: var(--yellow);">0</strong></div>
+        <div><span style="color: var(--muted);">Produtos:</span> <strong id="tProducts" style="color: var(--blue);">0</strong></div>
+      </div>
+    </header>
+
+    <main class="p-8 flex-1">
+      <!-- View: Dashboard -->
+      <section id="view-dashboard" class="view active space-y-6">
+        <div id="cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="card">
+            <h3 class="text-sm font-semibold uppercase tracking-wider mb-4" style="color: var(--accent2);">Pedidos por Status</h3>
+            <div style="height: 260px; display: flex; align-items: center; justify-content: center;">
+              <canvas id="chartStatus"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="text-sm font-semibold uppercase tracking-wider mb-4" style="color: var(--accent2);">Receita por Catálogo</h3>
+            <div style="height: 260px;">
+              <canvas id="chartCatalog"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold uppercase tracking-wider" style="color: var(--accent2);">Últimos Pedidos (PIX PingoCash)</h3>
+            <button class="btn-dark text-xs" onclick="refresh().then(renderAll)"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+          </div>
+          <div id="recentOrders"></div>
+        </div>
+      </section>
+
+      <!-- View: Catalogs -->
+      <section id="view-catalogs" class="view space-y-6">
+        <div class="flex justify-between items-center">
+          <p class="text-sm" style="color: var(--muted);">Gerencie os catálogos disponíveis no bot Discord.</p>
+          <button class="btn-gold" onclick="openCatalogModal()"><i class="fa-solid fa-plus"></i> Novo Catálogo</button>
+        </div>
+        <div class="card" id="catalogsTable"></div>
+      </section>
+
+      <!-- View: Products -->
+      <section id="view-products" class="view space-y-6">
+        <div class="flex flex-wrap justify-between items-center gap-4">
+          <div class="flex items-center gap-3">
+            <span class="text-sm" style="color: var(--muted);">Filtrar por catálogo:</span>
+            <select id="filterCatalog" class="input" style="width: 220px;" onchange="renderProducts()">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <button class="btn-gold" onclick="openProductModal()"><i class="fa-solid fa-plus"></i> Novo Produto</button>
+        </div>
+        <div class="card" id="productsTable"></div>
+      </section>
+
+      <!-- View: Orders -->
+      <section id="view-orders" class="view space-y-6">
+        <div class="flex flex-wrap justify-between items-center gap-4">
+          <div class="flex items-center gap-3">
+            <span class="text-sm" style="color: var(--muted);">Filtrar por status:</span>
+            <select id="filterStatus" class="input" style="width: 220px;" onchange="renderOrders()">
+              <option value="">Todos</option>
+              <option value="pending">Pendentes</option>
+              <option value="paid">Pagos</option>
+              <option value="delivered">Entregues</option>
+              <option value="cancelled">Cancelados</option>
+            </select>
+          </div>
+          <button class="btn-dark" onclick="refresh().then(renderAll)"><i class="fa-solid fa-rotate"></i> Atualizar Pedidos</button>
+        </div>
+        <div class="card" id="ordersTable"></div>
+      </section>
+
+      <!-- View: Pins -->
+      <section id="view-pins" class="view space-y-6">
+        <div class="flex justify-between items-center">
+          <p class="text-sm" style="color: var(--muted);">Mensagens interativas fixadas nos canais do Discord.</p>
+          <button class="btn-gold" onclick="openPinModal()"><i class="fa-solid fa-thumbtack"></i> Fixar Catálogo</button>
+        </div>
+        <div class="card" id="pinsTable"></div>
+      </section>
+
+      <!-- View: Bots -->
+      <section id="view-bots" class="view space-y-6">
+        <div class="flex justify-between items-center">
+          <p class="text-sm" style="color: var(--muted);">Webhooks e bots parceiros registrados para sincronização.</p>
+          <button class="btn-gold" onclick="openBotModal()"><i class="fa-solid fa-plus"></i> Registrar Bot</button>
+        </div>
+        <div class="card" id="botsTable"></div>
+      </section>
+
+      <!-- View: Settings -->
+      <section id="view-settings" class="view space-y-6">
+        <div class="card max-w-2xl space-y-4">
+          <h3 class="text-lg font-bold" style="color: var(--accent2);">Identidade do Bot</h3>
+          <div>
+            <label class="block text-xs uppercase tracking-wider mb-1" style="color: var(--muted);">Nome do Bot</label>
+            <input id="sName" class="input" placeholder="WL7 STORE" />
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider mb-1" style="color: var(--muted);">Moeda</label>
+            <input id="sCurrency" class="input" placeholder="BRL" />
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider mb-1" style="color: var(--muted);">URL do Avatar</label>
+            <input id="sAvatar" class="input" placeholder="https://..." />
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider mb-1" style="color: var(--muted);">URL do Banner</label>
+            <input id="sBanner" class="input" placeholder="https://..." />
+          </div>
+          <div class="pt-2">
+            <button class="btn-gold" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Salvar Configurações</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal: Catalog -->
+  <div id="modalCatalog" class="modal-bg fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="card w-full max-w-md m-4 space-y-4">
+      <h3 class="text-xl font-bold text-accent">Novo Catálogo</h3>
+      <div>
+        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Nome</label>
+        <input id="cName" class="input" placeholder="Ex: laras" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Descrição</label>
+        <input id="cDesc" class="input" placeholder="Descrição opcional" />
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button class="btn-dark" onclick="closeModal('modalCatalog')">Cancelar</button>
+        <button class="btn-gold" onclick="saveCatalog()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Product -->
+  <div id="modalProduct" class="modal-bg fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="card w-full max-w-md m-4 space-y-4">
+      <h3 id="prodModalTitle" class="text-xl font-bold text-accent">Novo Produto</h3>
+      <div>
+        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Catálogo</label>
+        <select id="pCatalog" class="input"></select>
+      </div>
+      <div>
+        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Nome do Produto</label>
+        <input id="pName" class="input" placeholder="Ex: 1 SEMANA" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Preço (R$)</label>
+          <input id="pPrice" type="number" step="0.01" class="input" placeholder="100.00" />
+        </div>
+        <div>
+          <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Estoque (-1 = ∞)</label>
+          <input id="pStock" type="number" class="input" value="-1" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Descrição</label>
+        <input id="pDesc" class="input" placeholder="Descrição opcional" />
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button class="btn-dark" onclick="closeModal('modalProduct')">Cancelar</button>
+        <button class="btn-gold" onclick="saveProduct()">Salvar Produto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Pin -->
+  <div id="modalPin" class="modal-bg fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="card w-full max-w-md m-4 space-y-4">
+      <h3 class="text-xl font-bold text-accent">Fixar Catálogo em Canal</h3>
+      <div>
+        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Catálogo</label>
+        <select id="pinCatalog" class="input"></select>
+      </div>
+      <div>
+        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Canal do Discord</label>
+        <select id="pinChannel" class="input"></select>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button class="btn-dark" onclick="closeModal('modalPin')">Cancelar</button>
+        <button class="btn-gold" onclick="savePin()">Fixar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Bot -->
+  <div id="modalBot" class="modal-bg fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="card w-full max-w-md m-4 space-y-4">
+      <h3 class="text-xl font-bold text-accent">Registrar Bot / Webhook</h3>
+      <div>
+        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Nome</label>
+        <input id="bName" class="input" placeholder="Nome do bot" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">URL do Webhook Discord</label>
+        <input id="bWebhook" class="input" placeholder="https://discord.com/api/webhooks/..." />
+      </div>
+      <div>
+        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Observação</label>
+        <input id="bNote" class="input" placeholder="Opcional" />
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button class="btn-dark" onclick="closeModal('modalBot')">Cancelar</button>
+        <button class="btn-gold" onclick="saveBot()">Registrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Announce -->
+  <div id="modalAnnounce" class="modal-bg fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="card w-full max-w-lg m-4 space-y-4 max-h-[90vh] overflow-y-auto">
+      <h3 class="text-xl font-bold text-accent">Anunciar Catálogo (@everyone)</h3>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Catálogo</label>
+          <select id="annCatalog" class="input"></select>
+        </div>
+        <div>
+          <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Canal</label>
+          <select id="annChannel" class="input"></select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Mensagem do Anúncio</label>
+        <textarea id="annMessage" rows="4" class="input" placeholder="Texto personalizado do anúncio..."></textarea>
+      </div>
+      <div>
+        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Produtos incluídos no menu</label>
+        <div id="annProducts" class="space-y-1 p-3 rounded-lg" style="background: var(--bg3); border: 1px solid var(--border); max-height: 150px; overflow-y: auto;"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Posição do Banner</label>
+          <select id="annBannerPos" class="input">
+            <option value="bottom">Abaixo do anúncio</option>
+            <option value="top">Acima do anúncio</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Imagem Banner (Opcional)</label>
+          <input id="annBanner" type="file" accept="image/*" class="input text-xs" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button class="btn-dark" onclick="closeModal('modalAnnounce')">Cancelar</button>
+        <button class="btn-gold" onclick="saveAnnounce()">Enviar Anúncio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirm -->
+  <div id="modalConfirm" class="modal-bg fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="card w-full max-w-sm m-4" style="background: var(--bg2);">
+      <h3 id="confirmTitle" class="text-accent font-bold text-xl mb-2">Confirmar</h3>
+      <p id="confirmMsg" class="text-sm mb-5" style="color: var(--muted);"></p>
+      <div class="flex justify-end gap-2">
+        <button class="btn-dark" onclick="closeModal('modalConfirm')">Cancelar</button>
+        <button class="px-4 py-2 rounded-lg text-sm font-semibold" style="background: var(--red); color:#fff;" onclick="confirmAction()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 px-5 py-3 rounded-xl shadow-2xl z-[100] opacity-0 translate-y-5 transition-all duration-300 pointer-events-none" style="background: var(--bg2); border: 1px solid var(--accent2); color: var(--text);"></div>
+
+  <script>
+    const API = '';
+    let state = { status: null, catalogs: [], orders: [], targets: [], pins: [], channels: [] };
+    let chartStatus = null, chartCatalog = null;
+
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.remove('opacity-0', 'translate-y-5');
+      setTimeout(() => t.classList.add('opacity-0', 'translate-y-5'), 3000);
+    }
+
+    async function api(path, opts = {}) {
+      const r = await fetch(API + path, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts,
+        body: opts.body ? JSON.stringify(opts.body) : undefined,
+      });
+      if (r.status === 401) {
+        window.location.href = '/login';
+        throw new Error('Sessão expirada');
+      }
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({ error: r.statusText }));
+        throw new Error(e.error || r.statusText);
+      }
+      return r.json();
+    }
+
+    function money(v) {
+      return Number(v || 0).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: (state.status && state.status.currency) || 'BRL',
+      });
+    }
+
+    function badge(status) {
+      const map = {
+        pending: 'badge-pending',
+        paid: 'badge-paid',
+        delivered: 'badge-delivered',
+        cancelled: 'badge-cancelled',
+        expired: 'badge-expired',
+      };
+      return '<span class="badge ' + (map[status] || '') + '">' + status + '</span>';
+    }
+
+    function applyTheme(t) {
+      if (t === 'light') document.body.classList.add('light-mode');
+      else document.body.classList.remove('light-mode');
+      localStorage.setItem('theme', t);
+      const b = document.getElementById('themeToggle');
+      if (b) b.textContent = t === 'dark' ? 'Modo claro' : 'Modo escuro';
+    }
+    function toggleTheme() {
+      applyTheme(document.body.classList.contains('light-mode') ? 'dark' : 'light');
+    }
+    window.toggleTheme = toggleTheme;
+    window.applyTheme = applyTheme;
+    applyTheme(localStorage.getItem('theme') || 'dark');
+
+    document.querySelectorAll('[data-view]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        document.querySelectorAll('[data-view]').forEach(x => x.classList.remove('active'));
+        a.classList.add('active');
+        const v = a.dataset.view;
+        document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+        document.getElementById('view-' + v).classList.add('active');
+        const titles = {
+          dashboard: 'Dashboard',
+          catalogs: 'Catálogos',
+          products: 'Produtos',
+          orders: 'Pedidos',
+          pins: 'Mensagens Fixas',
+          bots: 'Bots / Webhooks',
+          settings: 'Configurações',
+        };
+        document.getElementById('viewTitle').textContent = titles[v] || 'Dashboard';
+        renderAll();
+      });
+    });
+
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    }
+
+    async function refresh() {
+      try {
+        state.status = await api('/api/status');
+        state.catalogs = await api('/api/catalogs');
+        state.orders = await api('/api/orders');
+        state.targets = await api('/api/targets');
+        state.pins = await api('/api/pins');
+        state.channels = await api('/api/channels');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderAll() {
+      renderDashboard();
+      renderCatalogs();
+      renderProducts();
+      renderOrders();
+      renderPins();
+      renderBots();
+      renderSettings();
+      renderTicker();
+      updateCharts();
+    }
+
+    function renderTicker() {
+      if (!state.status) return;
+      document.getElementById('tRevenue').textContent = money(state.status.revenue);
+      document.getElementById('tPaid').textContent = state.status.paidOrders;
+      document.getElementById('tPending').textContent = state.status.pendingOrders;
+      document.getElementById('tProducts').textContent = state.status.products;
+      document.getElementById('botNameTop').textContent = state.status.botName || 'WL7 STORE';
+    }
+
+    function renderDashboard() {
+      if (!state.status) return;
+      document.getElementById('cards').innerHTML =
+        '<div class="card" style="background: linear-gradient(135deg, rgba(212,175,55,.15), var(--bg2)); border: 1px solid var(--accent2);">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Receita Total</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--accent2);">' + money(state.status.revenue) + '</div></div><div style="font-size:22px;color:var(--accent2);"><i class="fa-solid fa-coins"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:8px;color:var(--green);"><i class="fa-solid fa-arrow-trend-up"></i> ' + state.status.paidOrders + ' pagos</div>' +
+        '</div>' +
+        '<div class="card" style="background: linear-gradient(135deg, rgba(34,197,94,.12), var(--bg2)); border: 1px solid var(--green);">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pedidos Pagos</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--green);">' + state.status.paidOrders + '</div></div><div style="font-size:22px;color:var(--green);"><i class="fa-solid fa-circle-check"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:8px;color:var(--muted);">' + state.status.pendingOrders + ' pendentes</div>' +
+        '</div>' +
+        '<div class="card" style="background: linear-gradient(135deg, rgba(59,130,246,.12), var(--bg2)); border: 1px solid var(--blue);">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Produtos</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--blue);">' + state.status.products + '</div></div><div style="font-size:22px;color:var(--blue);"><i class="fa-solid fa-cart-shopping"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:8px;color:var(--muted);">' + state.status.catalogs + ' catálogos</div>' +
+        '</div>' +
+        '<div class="card" style="background: linear-gradient(135deg, rgba(234,179,8,.12), var(--bg2)); border: 1px solid var(--yellow);">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pendentes</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--yellow);">' + state.status.pendingOrders + '</div></div><div style="font-size:22px;color:var(--yellow);"><i class="fa-solid fa-clock"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:8px;color:var(--muted);">aguardando PIX</div>' +
+        '</div>' +
+        '<div class="card" style="background: linear-gradient(135deg, rgba(212,175,55,.12), var(--bg2)); border: 1px solid var(--accent);">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Bots</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--accent2);">' + state.status.targets + '</div></div><div style="font-size:22px;color:var(--accent2);"><i class="fa-solid fa-robot"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:8px;color:var(--muted);">registrados</div>' +
+        '</div>' +
+        '<div class="card" style="background: linear-gradient(135deg, rgba(236,72,153,.12), var(--bg2)); border: 1px solid #ec4899;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Fixadas</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:#ec4899;">' + state.status.pins + '</div></div><div style="font-size:22px;color:#ec4899;"><i class="fa-solid fa-thumbtack"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:8px;color:var(--muted);">mensagens ativas</div>' +
+        '</div>';
+
+      const recent = state.orders.slice(0, 8);
+      const el = document.getElementById('recentOrders');
+      if (recent.length === 0) {
+        el.innerHTML = '<div class="empty">Nenhum pedido ainda</div>';
+        return;
+      }
+      el.innerHTML =
+        '<table class="table"><thead><tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>Status</th><th>Data</th></tr></thead><tbody>' +
+        recent.map(o =>
+          '<tr><td>#' + o.id + '</td><td>' + o.userName + '</td><td>' + o.product + '</td><td>' + money(o.amount) + '</td><td>' + badge(o.status) + '</td><td class="text-xs" style="color:var(--muted);">' + new Date(o.createdAt).toLocaleString('pt-BR') + '</td></tr>'
+        ).join('') +
+        '</tbody></table>';
+    }
+
+    function renderCatalogs() {
+      const el = document.getElementById('catalogsTable');
+      if (state.catalogs.length === 0) {
+        el.innerHTML = '<div class="empty">Nenhum catálogo cadastrado</div>';
+        return;
+      }
+      el.innerHTML =
+        '<table class="table"><thead><tr><th>Nome</th><th>Produtos</th><th>Intro</th><th>Ações</th></tr></thead><tbody>' +
+        state.catalogs.map(c =>
+          '<tr><td class="font-semibold">' + c.name + '</td><td>' + (c.products ? c.products.length : 0) + '</td><td class="text-xs" style="color:var(--muted);">' + (c.intro || '-') + '</td><td><button class="btn-red" onclick="deleteCatalog(\'' + c.name + '\')">Excluir</button></td></tr>'
+        ).join('') +
+        '</tbody></table>';
+    }
+
+    function renderProducts() {
+      const sel = document.getElementById('filterCatalog');
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">Todos</option>' + state.catalogs.map(c => '<option value="' + c.name + '">' + c.name + '</option>').join('');
+      if (prev) sel.value = prev;
+      const filter = sel.value;
+      const el = document.getElementById('productsTable');
+      const rows = [];
+      for (const c of state.catalogs) {
+        if (filter && c.name !== filter) continue;
+        for (const p of (c.products || [])) rows.push({ catalog: c.name, ...p });
+      }
+      if (rows.length === 0) {
+        el.innerHTML = '<div class="empty">Nenhum produto cadastrado</div>';
+        return;
+      }
+      el.innerHTML =
+        '<table class="table"><thead><tr><th>Catálogo</th><th>Nome</th><th>Preço</th><th>Estoque</th><th>Descrição</th><th>Ações</th></tr></thead><tbody>' +
+        rows.map(p =>
+          '<tr><td>' + p.catalog + '</td><td class="font-semibold">' + p.name + '</td><td>' + money(p.price) + '</td><td>' + (p.stock === -1 ? '∞ ilimitado' : p.stock) + '</td><td class="text-xs" style="color:var(--muted);">' + (p.description || '-') + '</td><td class="flex gap-2"><button class="btn-dark" onclick="editStock(\'' + p.catalog + '\',\'' + p.name + '\',' + p.stock + ')">Estoque</button><button class="btn-red" onclick="deleteProduct(\'' + p.catalog + '\',\'' + p.name + '\')">Excluir</button></td></tr>'
+        ).join('') +
+        '</tbody></table>';
+    }
+
+    function renderOrders() {
+      const filter = document.getElementById('filterStatus').value;
+      let list = state.orders;
+      if (filter) list = list.filter(o => o.status === filter);
+      const el = document.getElementById('ordersTable');
+      if (list.length === 0) {
+        el.innerHTML = '<div class="empty">Nenhum pedido encontrado</div>';
+        return;
+      }
+      el.innerHTML =
+        '<table class="table"><thead><tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead><tbody>' +
+        list.map(o =>
+          '<tr><td>#' + o.id + '</td><td>' + o.userName + '</td><td>' + o.product + '</td><td>' + money(o.amount) + '</td><td>' + badge(o.status) + '</td><td class="text-xs" style="color:var(--muted);">' + new Date(o.createdAt).toLocaleString('pt-BR') + '</td><td class="flex items-center gap-2"><select class="input" style="width:120px; padding:5px 8px;" onchange="changeOrderStatus(' + o.id + ', this.value)"><option value="">Alterar...</option><option value="paid">Pago</option><option value="delivered">Entregue</option><option value="cancelled">Cancelado</option></select><button class="btn-green" onclick="deliverOrder(' + o.id + ')">Entregar</button></td></tr>'
+        ).join('') +
+        '</tbody></table>';
+    }
+
+    function renderPins() {
+      const el = document.getElementById('pinsTable');
+      if (state.pins.length === 0) {
+        el.innerHTML = '<div class="empty">Nenhuma mensagem fixada</div>';
+        return;
+      }
+      el.innerHTML =
+        '<table class="table"><thead><tr><th>Catálogo</th><th>Canal ID</th><th>Ações</th></tr></thead><tbody>' +
+        state.pins.map(p =>
+          '<tr><td>' + p.catalog + '</td><td class="text-xs" style="color:var(--muted);">' + p.channelId + '</td><td class="flex gap-2"><button class="btn-dark" onclick="refreshPin(\'' + p.catalog + '\')">Atualizar</button><button class="btn-red" onclick="deletePin(\'' + p.catalog + '\',\'' + p.channelId + '\')">Remover</button></td></tr>'
+        ).join('') +
+        '</tbody></table>';
+    }
+
+    function renderBots() {
+      const el = document.getElementById('botsTable');
+      if (state.targets.length === 0) {
+        el.innerHTML = '<div class="empty">Nenhum bot registrado</div>';
+        return;
+      }
+      el.innerHTML =
+        '<table class="table"><thead><tr><th>Nome</th><th>Webhook</th><th>Nota</th><th>Ações</th></tr></thead><tbody>' +
+        state.targets.map(t =>
+          '<tr><td class="font-semibold">' + t.name + '</td><td class="text-xs" style="color:var(--muted);">' + t.webhook.slice(0, 45) + '...</td><td>' + (t.note || '-') + '</td><td class="flex gap-2"><button class="btn-green" onclick="pushConfig(\'' + t.name + '\')">Push</button><button class="btn-red" onclick="deleteBot(\'' + t.name + '\')">Excluir</button></td></tr>'
+        ).join('') +
+        '</tbody></table><div class="mt-4"><button class="btn-gold" onclick="pushAll()">Enviar Config para Todos (Push All)</button></div>';
+    }
+
+    function renderSettings() {
+      if (!state.status) return;
+      document.getElementById('sName').value = state.status.botName || '';
+      document.getElementById('sCurrency').value = state.status.currency || 'BRL';
+      document.getElementById('sAvatar').value = state.status.botAvatar || '';
+      document.getElementById('sBanner').value = state.status.botBanner || '';
+    }
+
+    async function saveSettings() {
+      try {
+        await api('/api/settings', {
+          method: 'PUT',
+          body: {
+            botName: document.getElementById('sName').value,
+            currency: document.getElementById('sCurrency').value,
+            botAvatar: document.getElementById('sAvatar').value,
+            botBanner: document.getElementById('sBanner').value,
+          },
+        });
+        await refresh();
+        renderAll();
+        toast('Configurações salvas!');
+      } catch (e) {
+        toast(e.message);
+      }
+    }
+
+    function updateCharts() {
+      if (!state.orders) return;
+      const statuses = ['pending', 'paid', 'delivered', 'cancelled'];
+      const statusCounts = statuses.map(s => state.orders.filter(o => o.status === s).length);
+      const ctx1 = document.getElementById('chartStatus');
+      if (chartStatus) chartStatus.destroy();
+      chartStatus = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pendentes', 'Pagos', 'Entregues', 'Cancelados'],
+          datasets: [{
+            data: statusCounts,
+            backgroundColor: ['#fbbf24', '#22c55e', '#3b82f6', '#ef4444'],
+            borderWidth: 0,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: '#8a8a95' } } },
+          cutout: '65%',
+        },
+      });
+
+      const catMap = {};
+      for (const o of state.orders) {
+        if (o.status === 'paid' || o.status === 'delivered') {
+          catMap[o.catalog] = (catMap[o.catalog] || 0) + Number(o.amount || 0);
+        }
+      }
+      const cats = Object.keys(catMap);
+      const ctx2 = document.getElementById('chartCatalog');
+      if (chartCatalog) chartCatalog.destroy();
+      chartCatalog = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: cats.length ? cats : ['Sem vendas pagas'],
+          datasets: [{
+            label: 'Receita',
+            data: cats.length ? cats.map(c => catMap[c]) : [0],
+            backgroundColor: '#d4af37',
+            borderRadius: 8,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#8a8a95' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            y: { ticks: { color: '#8a8a95' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          },
+        },
+      });
+    }
+
+    function openCatalogModal() {
+      document.getElementById('cName').value = '';
+      document.getElementById('cDesc').value = '';
+      openModal('modalCatalog');
+    }
+    async function saveCatalog() {
+      try {
+        await api('/api/catalogs', {
+          method: 'POST',
+          body: {
+            name: document.getElementById('cName').value,
+            description: document.getElementById('cDesc').value,
+          },
+        });
+        closeModal('modalCatalog');
+        await refresh();
+        renderAll();
+        toast('Catálogo criado');
+      } catch (e) { toast(e.message); }
+    }
+
+    var pendingConfirm = null;
+    function openConfirm(title, msg, cb) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMsg').textContent = msg;
+      pendingConfirm = cb;
+      openModal('modalConfirm');
+    }
+    function confirmAction() {
+      if (pendingConfirm) pendingConfirm();
+      pendingConfirm = null;
+      closeModal('modalConfirm');
+    }
+
+    async function deleteCatalog(name) {
+      openConfirm('Excluir catálogo', 'Excluir o catálogo ' + name + '?', async function () {
+        try {
+          await api('/api/catalogs/' + encodeURIComponent(name), { method: 'DELETE' });
+          await refresh();
+          renderAll();
+          toast('Catálogo excluído');
+        } catch (e) { toast(e.message); }
+      });
+    }
+
+    function openProductModal() {
+      const sel = document.getElementById('pCatalog');
+      sel.innerHTML = state.catalogs.map(c => '<option value="' + c.name + '">' + c.name + '</option>').join('');
+      document.getElementById('pName').value = '';
+      document.getElementById('pPrice').value = '';
+      document.getElementById('pDesc').value = '';
+      document.getElementById('pStock').value = '-1';
+      document.getElementById('prodModalTitle').textContent = 'Novo Produto';
+      openModal('modalProduct');
+    }
+
+    async function saveProduct() {
+      try {
+        await api('/api/products', {
+          method: 'POST',
+          body: {
+            catalog: document.getElementById('pCatalog').value,
+            name: document.getElementById('pName').value,
+            price: parseFloat(document.getElementById('pPrice').value),
+            description: document.getElementById('pDesc').value,
+            stock: parseInt(document.getElementById('pStock').value),
+          },
+        });
+        closeModal('modalProduct');
+        await refresh();
+        renderAll();
+        toast('Produto salvo');
+      } catch (e) { toast(e.message); }
+    }
+
+    async function deleteProduct(cat, name) {
+      openConfirm('Excluir produto', 'Excluir o produto ' + name + '?', async function () {
+        try {
+          await api('/api/products/' + encodeURIComponent(cat) + '/' + encodeURIComponent(name), { method: 'DELETE' });
+          await refresh();
+          renderAll();
+          toast('Produto excluído');
+        } catch (e) { toast(e.message); }
+      });
+    }
+
+    async function editStock(cat, name, current) {
+      const v = prompt('Novo estoque para ' + name + ' (-1 = ilimitado):', current);
+      if (v === null) return;
+      try {
+        await api('/api/products/' + encodeURIComponent(cat) + '/' + encodeURIComponent(name) + '/stock', {
+          method: 'PUT',
+          body: { stock: parseInt(v) },
+        });
+        await refresh();
+        renderAll();
+        toast('Estoque atualizado');
+      } catch (e) { toast(e.message); }
+    }
+
+    async function changeOrderStatus(id, status) {
+      if (!status) return;
+      try {
+        await api('/api/orders/' + id + '/status', { method: 'PUT', body: { status } });
+        await refresh();
+        renderAll();
+        toast('Status atualizado');
+      } catch (e) { toast(e.message); }
+    }
+
+    async function deliverOrder(id) {
+      try {
+        await api('/api/orders/' + id + '/deliver', { method: 'POST' });
+        await refresh();
+        renderAll();
+        toast('Pedido #' + id + ' entregue!');
+      } catch (e) { toast(e.message); }
+    }
+
+    function openBotModal() {
+      document.getElementById('bName').value = '';
+      document.getElementById('bWebhook').value = '';
+      document.getElementById('bNote').value = '';
+      openModal('modalBot');
+    }
+
+    async function saveBot() {
+      try {
+        await api('/api/targets', {
+          method: 'POST',
+          body: {
+            name: document.getElementById('bName').value,
+            webhook: document.getElementById('bWebhook').value,
+            note: document.getElementById('bNote').value,
+          },
+        });
+        closeModal('modalBot');
+        await refresh();
+        renderAll();
+        toast('Bot registrado');
+      } catch (e) { toast(e.message); }
+    }
+
+    async function deleteBot(name) {
+      openConfirm('Excluir Bot', 'Excluir ' + name + '?', async function () {
+        try {
+          await api('/api/targets/' + encodeURIComponent(name), { method: 'DELETE' });
+          await refresh();
+          renderAll();
+          toast('Excluído');
+        } catch (e) { toast(e.message); }
+      });
+    }
+
+    async function pushConfig(name) {
+      try {
+        await api('/api/pushconfig/' + encodeURIComponent(name), { method: 'POST' });
+        toast('Config enviada para ' + name);
+      } catch (e) { toast(e.message); }
+    }
+
+    async function pushAll() {
+      try {
+        await api('/api/pushall', { method: 'POST' });
+        toast('Push concluído');
+      } catch (e) { toast(e.message); }
+    }
+
+    function openPinModal() {
+      document.getElementById('pinCatalog').innerHTML = state.catalogs.map(c => '<option value="' + c.name + '">' + c.name + '</option>').join('');
+      document.getElementById('pinChannel').innerHTML = state.channels.map(c => '<option value="' + c.id + '">#' + c.name + '</option>').join('');
+      openModal('modalPin');
+    }
+
+    async function savePin() {
+      try {
+        await api('/api/pin', {
+          method: 'POST',
+          body: {
+            catalog: document.getElementById('pinCatalog').value,
+            channelId: document.getElementById('pinChannel').value,
+          },
+        });
+        closeModal('modalPin');
+        await refresh();
+        renderAll();
+        toast('Mensagem fixada!');
+      } catch (e) { toast(e.message); }
+    }
+
+    async function deletePin(cat, ch) {
+      openConfirm('Remover fixada', 'Remover mensagem fixada do catálogo ' + cat + '?', async function () {
+        try {
+          await api('/api/pin', { method: 'DELETE', body: { catalog: cat, channelId: ch } });
+          await refresh();
+          renderAll();
+          toast('Removida');
+        } catch (e) { toast(e.message); }
+      });
+    }
+
+    async function refreshPin(cat) {
+      try {
+        await api('/api/refreshpin/' + encodeURIComponent(cat), { method: 'POST' });
+        toast('Mensagens fixadas atualizadas');
+      } catch (e) { toast(e.message); }
+    }
+
+    (async () => {
+      await refresh();
+      renderAll();
+      setInterval(async () => {
+        await refresh();
+        renderAll();
+      }, 8000);
+    })();
+  </script>
+  <script src="announce.js"></script>
+</body>
+</html>

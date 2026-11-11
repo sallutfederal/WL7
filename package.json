@@ -1,0 +1,10 @@
+{
+  "name": "wl7-bot-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "npm --prefix gateway install && npm --prefix setup install",
+    "start": "node setup/index.js",
+    "gateway": "node gateway/server.js"
+  }
+}
