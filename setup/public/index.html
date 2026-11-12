@@ -59,6 +59,77 @@
       display: flex;
       flex-direction: column;
       z-index: 30;
+      transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1), padding 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-x: hidden;
+    }
+    .sidebar-text {
+      display: inline-block;
+      white-space: nowrap;
+      overflow: hidden;
+      opacity: 1;
+      max-width: 180px;
+      transition: opacity 0.2s ease, max-width 0.28s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease;
+    }
+    .sidebar-toggle-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .sidebar-toggle-btn:hover {
+      color: var(--text);
+      border-color: var(--accent2);
+      background: rgba(124, 58, 237, 0.12);
+    }
+    .sidebar-toggle-btn i {
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 14px;
+    }
+    body.sidebar-collapsed .sidebar {
+      width: 76px;
+      padding-left: 12px !important;
+      padding-right: 12px !important;
+    }
+    body.sidebar-collapsed .sidebar-text {
+      opacity: 0;
+      max-width: 0;
+      transform: translateX(-6px);
+      pointer-events: none;
+    }
+    body.sidebar-collapsed .sidebar-header {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    body.sidebar-collapsed .sidebar-brand {
+      justify-content: center;
+      gap: 0;
+    }
+    body.sidebar-collapsed .sidebar-toggle-btn i {
+      transform: rotate(180deg);
+    }
+    body.sidebar-collapsed .nav-link {
+      justify-content: center;
+      padding: 10px 0;
+      gap: 0;
+    }
+    body.sidebar-collapsed .sidebar-footer-actions {
+      grid-template-columns: 1fr;
+    }
+    body.sidebar-collapsed .sidebar-footer button {
+      padding-left: 0;
+      padding-right: 0;
+      justify-content: center;
+      gap: 0;
     }
     .nav-link {
       display: flex;
@@ -70,8 +141,9 @@
       font-size: 13.5px;
       font-weight: 500;
       text-decoration: none;
-      transition: background 0.15s ease, color 0.15s ease;
+      transition: background 0.15s ease, color 0.15s ease, padding 0.25s ease, gap 0.25s ease;
       cursor: pointer;
+      white-space: nowrap;
     }
     .nav-icon {
       width: 20px;
@@ -126,6 +198,10 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    body.sidebar-collapsed .main-area {
+      margin-left: 76px;
     }
     .topbar {
       background: var(--bg2);
@@ -260,34 +336,44 @@
 <body>
 
   <!-- Sidebar -->
-  <aside class="sidebar p-5">
-    <div class="flex items-center gap-3 pb-5 mb-5" style="border-bottom: 1px solid var(--border);">
-      <img src="/favicon.png" alt="WL7 STORE" class="w-9 h-9 rounded-lg object-cover" style="border: 1px solid var(--border);" />
-      <div>
-        <h1 id="botNameTop" class="text-sm font-semibold tracking-wide" style="color: var(--text);">WL7 STORE</h1>
-        <p class="text-[11px]" style="color: var(--muted);">Painel Administrativo</p>
+  <aside id="sidebar" class="sidebar p-5">
+    <div class="sidebar-header flex items-center justify-between gap-2 pb-5 mb-5" style="border-bottom: 1px solid var(--border);">
+      <div class="sidebar-brand flex items-center gap-3 min-w-0">
+        <img src="/favicon.png" alt="WL7 STORE" class="w-9 h-9 rounded-lg object-cover flex-shrink-0" style="border: 1px solid var(--border);" />
+        <div class="sidebar-text">
+          <h1 id="botNameTop" class="text-sm font-semibold tracking-wide truncate" style="color: var(--text);">WL7 STORE</h1>
+          <p class="text-[11px] truncate" style="color: var(--muted);">Painel Administrativo</p>
+        </div>
       </div>
+      <button id="sidebarToggleBtn" class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Recolher menu" aria-label="Recolher ou expandir menu lateral">
+        <i class="ph-bold ph-caret-left"></i>
+      </button>
     </div>
 
     <nav class="space-y-1 flex-1">
-      <a href="#" data-view="dashboard" class="nav-link active"><span class="nav-icon"><i class="ph-duotone ph-squares-four"></i></span> Dashboard</a>
-      <a href="#" data-view="catalogs" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-stack"></i></span> Catálogos</a>
-      <a href="#" data-view="products" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-package"></i></span> Produtos</a>
-      <a href="#" data-view="photos" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-camera-plus"></i></span> Fotos dos Produtos</a>
-      <a href="#" data-view="fakesales" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-lightning"></i></span> Vendas Fake</a>
-      <a href="#" data-view="orders" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-receipt"></i></span> Pedidos</a>
-      <a href="#" data-view="pins" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-push-pin"></i></span> Mensagens Fixas</a>
-      <a href="#" data-view="bots" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-webhooks-logo"></i></span> Bots / Webhooks</a>
-      <a href="#" data-view="settings" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-sliders-horizontal"></i></span> Configurações</a>
+      <a href="#" data-view="dashboard" class="nav-link active" title="Dashboard"><span class="nav-icon"><i class="ph-duotone ph-squares-four"></i></span> <span class="sidebar-text">Dashboard</span></a>
+      <a href="#" data-view="catalogs" class="nav-link" title="Catálogos"><span class="nav-icon"><i class="ph-duotone ph-stack"></i></span> <span class="sidebar-text">Catálogos</span></a>
+      <a href="#" data-view="products" class="nav-link" title="Produtos"><span class="nav-icon"><i class="ph-duotone ph-package"></i></span> <span class="sidebar-text">Produtos</span></a>
+      <a href="#" data-view="photos" class="nav-link" title="Fotos dos Produtos"><span class="nav-icon"><i class="ph-duotone ph-camera-plus"></i></span> <span class="sidebar-text">Fotos dos Produtos</span></a>
+      <a href="#" data-view="fakesales" class="nav-link" title="Vendas Fake"><span class="nav-icon"><i class="ph-duotone ph-lightning"></i></span> <span class="sidebar-text">Vendas Fake</span></a>
+      <a href="#" data-view="orders" class="nav-link" title="Pedidos"><span class="nav-icon"><i class="ph-duotone ph-receipt"></i></span> <span class="sidebar-text">Pedidos</span></a>
+      <a href="#" data-view="pins" class="nav-link" title="Mensagens Fixas"><span class="nav-icon"><i class="ph-duotone ph-push-pin"></i></span> <span class="sidebar-text">Mensagens Fixas</span></a>
+      <a href="#" data-view="bots" class="nav-link" title="Bots / Webhooks"><span class="nav-icon"><i class="ph-duotone ph-webhooks-logo"></i></span> <span class="sidebar-text">Bots / Webhooks</span></a>
+      <a href="#" data-view="settings" class="nav-link" title="Configurações"><span class="nav-icon"><i class="ph-duotone ph-sliders-horizontal"></i></span> <span class="sidebar-text">Configurações</span></a>
     </nav>
 
-    <div class="pt-4 space-y-2" style="border-top: 1px solid var(--border);">
-      <button class="btn-gold w-full flex items-center justify-center gap-2" onclick="openAnnounceModal()">
-        <i class="ph-duotone ph-megaphone text-base"></i> Anunciar Catálogo
+    <div class="sidebar-footer pt-4 space-y-2" style="border-top: 1px solid var(--border);">
+      <button class="btn-gold w-full flex items-center justify-center gap-2" onclick="openAnnounceModal()" title="Anunciar Catálogo">
+        <i class="ph-duotone ph-megaphone text-base flex-shrink-0"></i> <span class="sidebar-text">Anunciar Catálogo</span>
       </button>
-      <div class="grid grid-cols-2 gap-2">
-        <button id="themeToggle" class="btn-dark w-full text-xs" onclick="toggleTheme()">Modo claro</button>
-        <button class="btn-red w-full text-xs flex items-center justify-center gap-1.5" onclick="logout()"><i class="ph-bold ph-sign-out text-sm"></i> Sair</button>
+      <div class="sidebar-footer-actions grid grid-cols-2 gap-2">
+        <button id="themeToggle" class="btn-dark w-full text-xs flex items-center justify-center gap-1.5" onclick="toggleTheme()" title="Alternar tema">
+          <i id="themeToggleIcon" class="ph-duotone ph-sun text-sm flex-shrink-0"></i>
+          <span id="themeToggleText" class="sidebar-text">Modo claro</span>
+        </button>
+        <button class="btn-red w-full text-xs flex items-center justify-center gap-1.5" onclick="logout()" title="Sair">
+          <i class="ph-bold ph-sign-out text-sm flex-shrink-0"></i> <span class="sidebar-text">Sair</span>
+        </button>
       </div>
     </div>
   </aside>
@@ -865,8 +951,10 @@
       if (t === 'light') document.body.classList.add('light-mode');
       else document.body.classList.remove('light-mode');
       localStorage.setItem('theme', t);
-      const b = document.getElementById('themeToggle');
-      if (b) b.textContent = t === 'dark' ? 'Modo claro' : 'Modo escuro';
+      const txt = document.getElementById('themeToggleText');
+      const ico = document.getElementById('themeToggleIcon');
+      if (txt) txt.textContent = t === 'dark' ? 'Modo claro' : 'Modo escuro';
+      if (ico) ico.className = t === 'dark' ? 'ph-duotone ph-sun text-sm flex-shrink-0' : 'ph-duotone ph-moon text-sm flex-shrink-0';
     }
     function toggleTheme() {
       applyTheme(document.body.classList.contains('light-mode') ? 'dark' : 'light');
@@ -874,6 +962,23 @@
     window.toggleTheme = toggleTheme;
     window.applyTheme = applyTheme;
     applyTheme(localStorage.getItem('theme') || 'dark');
+
+    function applySidebarState(collapsed) {
+      if (collapsed) document.body.classList.add('sidebar-collapsed');
+      else document.body.classList.remove('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', collapsed ? '1' : '0');
+      const btn = document.getElementById('sidebarToggleBtn');
+      if (btn) btn.title = collapsed ? 'Expandir menu' : 'Recolher menu';
+      setTimeout(() => {
+        if (chartStatus) chartStatus.resize();
+        if (chartCatalog) chartCatalog.resize();
+      }, 300);
+    }
+    function toggleSidebar() {
+      applySidebarState(!document.body.classList.contains('sidebar-collapsed'));
+    }
+    window.toggleSidebar = toggleSidebar;
+    applySidebarState(localStorage.getItem('sidebarCollapsed') === '1');
 
     document.querySelectorAll('[data-view]').forEach(a => {
       a.addEventListener('click', e => {

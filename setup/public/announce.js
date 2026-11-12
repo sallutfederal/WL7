@@ -1,4 +1,4 @@
-﻿function renderAnnounceProducts() {
+function renderAnnounceProducts() {
   const catName = document.getElementById('annCatalog').value;
   const cat = state.catalogs.find(c => c.name === catName);
   const el = document.getElementById('annProducts');
