@@ -340,22 +340,19 @@ function money(v) { return Number(v).toLocaleString('pt-BR', { style: 'currency'
 function getCatalog(name) { return cfg.catalogs.find(c => normName(c.name) === normName(name)); }
 function getProductDiscordImageUrl(p) {
   if (!p || !p.imageUrl) return null;
-  const dims = {
-    small: { w: 180, h: 100 },
-    medium: { w: 360, h: 200 },
-    large: { w: 640, h: 360 },
-    full: { w: 960, h: 540 },
+  const widths = {
+    small: 320,
+    medium: 480,
+    large: 680,
+    full: 960,
   };
-  const d = dims[p.imageSize || 'medium'] || dims.medium;
+  const w = widths[p.imageSize || 'medium'] || widths.medium;
   try {
-    let raw = p.proxyUrl || p.imageUrl;
-    if (raw.includes('cdn.discordapp.com/')) {
-      raw = raw.replace('cdn.discordapp.com/', 'media.discordapp.net/');
-    }
+    let raw = p.imageUrl || p.proxyUrl;
     if (raw.includes('media.discordapp.net/')) {
       const u = new URL(raw);
-      u.searchParams.set('width', String(d.w));
-      u.searchParams.set('height', String(d.h));
+      u.searchParams.delete('height');
+      u.searchParams.set('width', String(w));
       return u.toString();
     }
     return p.imageUrl;
@@ -364,46 +361,65 @@ function getProductDiscordImageUrl(p) {
   }
 }
 
-function productCardEmbed(cat, p) {
+function productCardEmbed(cat, p, customMsg = '') {
+  const prodTitle = String((p && p.name) || (cat && cat.name) || 'PRODUTO').toUpperCase();
   const e = new EmbedBuilder()
-    .setTitle('🛒 ' + p.name + ' — ' + money(p.price))
-    .setColor(0xd4af37);
+    .setTitle('📑 • ' + prodTitle)
+    .setColor(0x7c3aed);
+
   const descParts = [];
-  if (p.description) descParts.push(p.description);
-  descParts.push('📦 **Estoque:** ' + (p.stock === -1 ? '∞ Ilimitado' : p.stock));
-  e.setDescription(descParts.join('\n'));
-  e.setFooter({ text: 'Catálogo: ' + cat.name.toUpperCase() });
+  const customText = String(customMsg || (p && p.description) || (cat && cat.intro) || (cat && cat.description) || '').trim();
+  if (customText) {
+    const formattedLines = customText
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean)
+      .map(line => (/^[👨‍💻💰✅⚡🔥📑💵🛒⛔]/.test(line) ? line : ('👨‍💻 • ***' + line + '***')));
+    descParts.push(formattedLines.join('\n\n'));
+  } else {
+    descParts.push(
+      '👨‍💻 • ***AO EFETUAR A COMPRA VOCÊ RECEBERÁ DE IMEDIATO NA SUA DM O SEU PRODUTO COM ENTREGA 100% AUTOMÁTICA!***\n\n' +
+      '💰 • ***O PRODUTO NÃO PRECISA DE MAIS NENHUM INVESTIMENTO ALÉM DO PREÇO DELE, ESSA É A VANTAGEM!***\n\n' +
+      '✅ • ***PRODUTO NOVO, TESTADO 100% E EXCLUSIVO DA ' + String(cfg.botName || 'WL7 STORE').toUpperCase() + '***'
+    );
+  }
+
+  descParts.push('💵 • **Preço para**\n' + money(p ? p.price : 0));
+  descParts.push('🛒 • **Estoque:**\n' + ((p && p.stock === -1) ? '∞ Ilimitado' : String(p ? p.stock : 0)));
+
+  e.setDescription(descParts.join('\n\n'));
+
   const imgUrl = getProductDiscordImageUrl(p);
   if (imgUrl) {
-    if ((p.imageSize || 'medium') === 'small') {
-      e.setThumbnail(imgUrl);
-    } else {
-      e.setImage(imgUrl);
-    }
+    e.setImage(imgUrl);
   }
   return e;
 }
 
 function catalogEmbed(cat) {
-  const e = new EmbedBuilder().setTitle('Catalogo ' + cat.name.toUpperCase()).setColor(0x57f287).setTimestamp();
-  if (!cat.products || cat.products.length === 0) { e.setDescription('Nenhum produto cadastrado.'); return e; }
-  const lines = cat.products.map((p, i) => '**' + (i + 1) + '. ' + p.name + '** - ' + money(p.price) + (p.description ? ' _' + p.description + '_' : '') + '  (estoque: ' + (p.stock === -1 ? '∞' : p.stock) + ')');
-  e.setDescription(lines.join('\n'));
-  e.setFooter({ text: cat.products.length + ' produto(s)' });
-  if (cfg.botAvatar) e.setThumbnail(cfg.botAvatar);
+  const prods = (cat && cat.products) || [];
+  if (prods.length > 0) {
+    return productCardEmbed(cat, prods[0], cat.intro || '');
+  }
+  const e = new EmbedBuilder().setTitle('📑 • ' + String(cat.name || 'CATÁLOGO').toUpperCase()).setColor(0x7c3aed);
+  e.setDescription('Nenhum produto cadastrado.');
   return e;
 }
 
-function catalogEmbeds(cat, selectedNames = null) {
-  const main = catalogEmbed(cat);
-  const prods = (cat.products || []).filter(p => p && p.imageUrl && (!selectedNames || selectedNames.some(n => normName(n) === normName(p.name))));
-  const cards = prods.slice(0, 9).map(p => productCardEmbed(cat, p));
-  return [main, ...cards];
+function catalogEmbeds(cat, selectedNames = null, customMsg = '') {
+  const allProds = (cat && cat.products) || [];
+  const prods = selectedNames && Array.isArray(selectedNames) && selectedNames.length > 0
+    ? allProds.filter(p => p && selectedNames.some(n => normName(n) === normName(p.name)))
+    : allProds;
+  const targetProds = prods.length > 0 ? prods : allProds;
+  if (targetProds.length === 0) return [catalogEmbed(cat)];
+  return targetProds.slice(0, 10).map(p => productCardEmbed(cat, p, customMsg));
 }
 
 function pinnedEmbeds(cat) {
-  const prods = (cat.products || []).filter(p => p && p.imageUrl);
-  return prods.slice(0, 10).map(p => productCardEmbed(cat, p));
+  const prods = (cat && cat.products) || [];
+  if (prods.length === 0) return [catalogEmbed(cat)];
+  return prods.slice(0, 10).map(p => productCardEmbed(cat, p, cat.intro || ''));
 }
 
 function productDetailEmbed(cat, p) {
@@ -443,17 +459,59 @@ function buildConfigPayload() {
   return { type: 'setup-config', version: 3, botName: cfg.botName, botAvatar: cfg.botAvatar, currency: cfg.currency, catalogs: cfg.catalogs, generatedAt: new Date().toISOString() };
 }
 
-// pinned message builders
+// pinned & announce message builders
 function pinnedContent(cat) {
-  const intro = cat.intro ? cat.intro + '\n\n' : '';
-  return intro + '**' + cat.name.toUpperCase() + '** - selecione abaixo o que deseja:';
+  return '';
 }
 function pinnedSelectMenu(cat) {
-  const opts = (cat.products || []).slice(0, 25).map(p => new StringSelectMenuOptionBuilder().setLabel(p.name.slice(0, 100)).setDescription((money(p.price) + ' | estoque: ' + (p.stock === -1 ? '∞' : p.stock) + (p.description ? ' - ' + p.description.slice(0, 60) : '')).slice(0, 100)).setValue(p.name.slice(0, 100)));
-  if (opts.length === 0) opts.push(new StringSelectMenuOptionBuilder().setLabel('Sem produtos').setValue('__none__').setDescription('Nenhum produto cadastrado'));
-  const menu = new StringSelectMenuBuilder().setCustomId('pin:select:' + cat.name).setPlaceholder('Selecione uma opcao').addOptions(opts);
-  const up = new ButtonBuilder().setCustomId('pin:up:' + cat.name).setLabel('Voltar').setStyle(ButtonStyle.Secondary).setEmoji('⬆️');
-  return [new ActionRowBuilder().addComponents(menu), new ActionRowBuilder().addComponents(up)];
+  const prods = (cat && cat.products) || [];
+  const cartBtn = new ButtonBuilder()
+    .setCustomId('buy:cart:' + cat.name)
+    .setLabel('Adicionar ao carrinho')
+    .setStyle(ButtonStyle.Success)
+    .setEmoji('🛒');
+  const rows = [new ActionRowBuilder().addComponents(cartBtn)];
+  if (prods.length > 1) {
+    const opts = prods.slice(0, 25).map(p =>
+      new StringSelectMenuOptionBuilder()
+        .setLabel((p.name || cat.name || 'Produto').slice(0, 100))
+        .setDescription((money(p.price) + ' | estoque: ' + (p.stock === -1 ? '∞' : p.stock) + (p.description ? ' - ' + p.description.slice(0, 60) : '')).slice(0, 100))
+        .setValue((p.name || cat.name || 'Produto').slice(0, 100))
+    );
+    const menu = new StringSelectMenuBuilder()
+      .setCustomId('pin:select:' + cat.name)
+      .setPlaceholder('Selecione outro produto do catálogo')
+      .addOptions(opts);
+    rows.push(new ActionRowBuilder().addComponents(menu));
+  }
+  return rows;
+}
+function buildAnnounceComponents(cat, selectedNames, announceId) {
+  const allProds = (cat && cat.products) || [];
+  const prods = selectedNames && Array.isArray(selectedNames) && selectedNames.length > 0
+    ? allProds.filter(p => p && selectedNames.some(n => normName(n) === normName(p.name)))
+    : allProds;
+  const targetProds = prods.length > 0 ? prods : allProds;
+  const cartBtn = new ButtonBuilder()
+    .setCustomId('buy:announce:' + announceId)
+    .setLabel('Adicionar ao carrinho')
+    .setStyle(ButtonStyle.Success)
+    .setEmoji('🛒');
+  const rows = [new ActionRowBuilder().addComponents(cartBtn)];
+  if (targetProds.length > 1) {
+    const opts = targetProds.slice(0, 25).map(p =>
+      new StringSelectMenuOptionBuilder()
+        .setLabel((p.name || cat.name || 'Produto').slice(0, 100))
+        .setDescription((money(p.price) + (p.description ? ' - ' + p.description.slice(0, 60) : '')).slice(0, 100))
+        .setValue((p.name || cat.name || 'Produto').slice(0, 100))
+    );
+    const menu = new StringSelectMenuBuilder()
+      .setCustomId('announce:select:' + announceId)
+      .setPlaceholder('Escolha um produto')
+      .addOptions(opts);
+    rows.push(new ActionRowBuilder().addComponents(menu));
+  }
+  return rows;
 }
 const HELP_CATEGORIES = {
   geral: { label: 'Geral', emoji: '⚙️', color: 0x5865f2, cmds: [
@@ -868,13 +926,8 @@ async function handle(interaction) {
         const announceId = cfg.announces.length + 1;
         const selected = (cat.products || []).map(p => p.name);
         const customMsg = '';
-        const opts = (selected || []).map(name => { const p = (cat.products || []).find(x => x.name === name); if (!p) return null; return new (require('discord.js').StringSelectMenuOptionBuilder)().setLabel(p.name.slice(0,100)).setDescription((money(p.price) + (p.description ? ' - ' + p.description.slice(0,60) : '')).slice(0,100)).setValue(p.name.slice(0,100)); }).filter(Boolean);
-        if (opts.length === 0) opts.push(new (require('discord.js').StringSelectMenuOptionBuilder)().setLabel('Sem produtos').setValue('__none__'));
-        const menu = new (require('discord.js').StringSelectMenuBuilder)().setCustomId('announce:select:' + announceId).setPlaceholder('Escolha um produto').addOptions(opts);
-        const up = new (require('discord.js').ButtonBuilder)().setCustomId('announce:up:' + announceId).setLabel('Voltar').setStyle(2).setEmoji('⬆️');
-        const comps = [new (require('discord.js').ActionRowBuilder)().addComponents(menu), new (require('discord.js').ActionRowBuilder)().addComponents(up)];
-        const content = '@everyone ' + (customMsg || ('Catalogo ' + cat.name.toUpperCase() + ' disponivel!'));
-        const announceMsg = { content: content, embeds: catalogEmbeds(cat, selected), components: comps, allowedMentions: { parse: ['everyone'] } };
+        const comps = buildAnnounceComponents(cat, selected, announceId);
+        const announceMsg = { embeds: catalogEmbeds(cat, selected, customMsg), components: comps, allowedMentions: { parse: ['everyone'] } };
         const msg = await channel.send(announceMsg);
         cfg.announces.push({ id: announceId, catalog: cat.name, channelId: channel.id, messageId: msg.id, message: customMsg, products: selected, createdAt: new Date().toISOString() });
         await saveConfig(cfg);
@@ -1135,6 +1188,28 @@ async function handleComponent(interaction) {
       }
     }
     if (interaction.isButton()) {
+      if (interaction.customId.startsWith('buy:cart:')) {
+        const catName = interaction.customId.slice('buy:cart:'.length);
+        const cat = getCatalog(catName);
+        if (!cat || !(cat.products && cat.products.length > 0)) {
+          return interaction.reply({ content: 'Produto não encontrado neste catálogo.', ephemeral: true });
+        }
+        const p = cat.products[0];
+        await interaction.deferReply({ ephemeral: true });
+        return await generateCharge(interaction, cat, p);
+      }
+      if (interaction.customId.startsWith('buy:announce:')) {
+        const announceId = parseInt(interaction.customId.slice('buy:announce:'.length));
+        const ann = (cfg.announces || []).find(a => a.id === announceId);
+        const cat = ann ? getCatalog(ann.catalog) : (cfg.catalogs && cfg.catalogs[0]);
+        if (!cat || !(cat.products && cat.products.length > 0)) {
+          return interaction.reply({ content: 'Produto não encontrado.', ephemeral: true });
+        }
+        const selectedNames = (ann && Array.isArray(ann.products) && ann.products.length > 0) ? ann.products : [];
+        const p = (selectedNames.length > 0 && cat.products.find(x => selectedNames.some(n => normName(n) === normName(x.name)))) || cat.products[0];
+        await interaction.deferReply({ ephemeral: true });
+        return await generateCharge(interaction, cat, p);
+      }
       if (interaction.customId.startsWith('pix:copy:')) {
         const orderId = Number(interaction.customId.slice('pix:copy:'.length));
         const order = cfg.orders.find(o => o.id === orderId);
@@ -1187,12 +1262,8 @@ async function handleComponent(interaction) {
       const ann = (cfg.announces || []).find(a => a.id === announceId);
       const cat = ann ? getCatalog(ann.catalog) : null;
       if (!cat) return interaction.update({ content: 'Catalogo nao encontrado.', components: [] });
-      const opts = (ann.products || []).map(name => { const p = (cat.products||[]).find(x=>x.name===name); if (!p) return null; return new (require('discord.js').StringSelectMenuOptionBuilder)().setLabel(p.name.slice(0,100)).setDescription((money(p.price)+(p.description?' - '+p.description.slice(0,60):'')).slice(0,100)).setValue(p.name.slice(0,100)); }).filter(Boolean);
-      if (opts.length === 0) opts.push(new (require('discord.js').StringSelectMenuOptionBuilder)().setLabel('Sem produtos').setValue('__none__'));
-      const menu = new (require('discord.js').StringSelectMenuBuilder)().setCustomId('announce:select:'+announceId).setPlaceholder('Escolha um produto').addOptions(opts);
-      const up = new (require('discord.js').ButtonBuilder)().setCustomId('announce:up:'+announceId).setLabel('Voltar').setStyle(2).setEmoji('⬆️');
-      const comps = [new (require('discord.js').ActionRowBuilder)().addComponents(menu), new (require('discord.js').ActionRowBuilder)().addComponents(up)];
-      return interaction.update({ content: '@everyone ' + (ann.message || ('Catalogo ' + cat.name.toUpperCase() + ' disponivel!')), embeds: catalogEmbeds(cat, ann.products), components: comps, allowedMentions: { parse: [] } });
+      const comps = buildAnnounceComponents(cat, ann.products, announceId);
+      return interaction.update({ content: '', embeds: catalogEmbeds(cat, ann.products, ann.message || ''), components: comps, allowedMentions: { parse: [] } });
     }
     if (interaction.isButton() && interaction.customId === 'browse:up') {
       return interaction.update({ embeds: [catalogsOverviewEmbed()], components: browseCatalogComponents() });
@@ -1744,17 +1815,12 @@ async function checkFakeSalesTimer() {
     }
     if (!channelId) return res.status(400).json({ error: 'channelId required' });
     try {
-      const opts = (selected || []).map(name => { const p = (cat.products || []).find(x => x.name === name); if (!p) return null; return new (require('discord.js').StringSelectMenuOptionBuilder)().setLabel(p.name.slice(0,100)).setDescription((money(p.price) + (p.description ? ' - ' + p.description.slice(0,60) : '')).slice(0,100)).setValue(p.name.slice(0,100)); }).filter(Boolean);
-      if (opts.length === 0) opts.push(new (require('discord.js').StringSelectMenuOptionBuilder)().setLabel('Sem produtos').setValue('__none__'));
-      const menu = new (require('discord.js').StringSelectMenuBuilder)().setCustomId('announce:select:' + announceId).setPlaceholder('Escolha um produto').addOptions(opts);
-      const up = new (require('discord.js').ButtonBuilder)().setCustomId('announce:up:' + announceId).setLabel('Voltar').setStyle(2).setEmoji('⬆️');
-      const comps = [new (require('discord.js').ActionRowBuilder)().addComponents(menu), new (require('discord.js').ActionRowBuilder)().addComponents(up)];
-      const content = '@everyone ' + (customMsg || ('Catalogo ' + cat.name.toUpperCase() + ' disponivel!'));
+      const comps = buildAnnounceComponents(cat, selected, announceId);
       let msgId = null;
       const token = getBotToken();
       if (client.isReady()) {
         const channel = await client.channels.fetch(channelId);
-        const announceMsg = { content: content, embeds: catalogEmbeds(cat, selected), components: comps, allowedMentions: { parse: ['everyone'] } };
+        const announceMsg = { embeds: catalogEmbeds(cat, selected, customMsg), components: comps, allowedMentions: { parse: ['everyone'] } };
         let msg;
         if (bannerPosition === 'top' && bannerFile) {
           await channel.send({ files: [bannerFile], allowedMentions: { parse: [] } });
@@ -1769,8 +1835,7 @@ async function checkFakeSalesTimer() {
       } else if (token) {
         const rest = new REST({ version: '10' }).setToken(token);
         const bodyPayload = {
-          content: content,
-          embeds: catalogEmbeds(cat, selected).map(e => e.toJSON()),
+          embeds: catalogEmbeds(cat, selected, customMsg).map(e => e.toJSON()),
           components: comps.map(c => c.toJSON()),
           allowed_mentions: { parse: ['everyone'] },
         };
