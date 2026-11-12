@@ -383,7 +383,7 @@
             </div>
             <div class="p-3 rounded-xl space-y-1" style="background: var(--bg3); border: 1px solid var(--border);">
               <div class="text-xs uppercase tracking-wider" style="color: var(--muted);">Formato padrão da mensagem no Discord:</div>
-              <div class="font-mono text-sm font-bold" style="color: var(--accent2);">+1( NOME DO PRODUTO ) ENTREGUE  @everyone</div>
+              <div class="font-mono text-sm font-bold" style="color: var(--accent2);">+1 NOME DO PRODUTO ENTREGUE  @everyone</div>
             </div>
             <div class="flex flex-wrap gap-2 pt-2">
               <button id="btnFsToggle" class="btn-gold flex-1" onclick="toggleFakeSales(true)">
@@ -1303,7 +1303,7 @@
         } else {
           eligEl.innerHTML = list.map(p =>
             '<span class="px-3 py-1 rounded-lg text-xs font-semibold" style="background:var(--bg3); border:1px solid var(--border); color:var(--text);">' +
-              '<span style="color:var(--accent2);">+1( ' + esc(p.name) + ' )</span> <span style="color:var(--muted);">[' + esc(p.catalog) + ']</span>' +
+              '<span style="color:var(--accent2);">+1 ' + esc(p.name) + '</span> <span style="color:var(--muted);">[' + esc(p.catalog) + ']</span>' +
             '</span>'
           ).join('');
         }

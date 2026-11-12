@@ -1435,7 +1435,7 @@ async function sendOneFakeSale(overrideChannelId = '') {
       if (diff.length > 0) candidates = diff;
     }
     const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-    const msgText = '+1( ' + chosen.name + ' ) ENTREGUE  @everyone';
+    const msgText = '+1 ' + chosen.name + ' ENTREGUE  @everyone';
     const token = getBotToken();
 
     if (client.isReady()) {
