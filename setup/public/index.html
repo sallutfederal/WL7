@@ -525,7 +525,26 @@
 
   <script>
     const API = '';
-    let state = { status: null, catalogs: [], orders: [], targets: [], pins: [], channels: [] };
+    const FALLBACK_CHANNELS = [
+      { id: '1535851044557557850', name: '🏆•referências' },
+      { id: '1535851073670090842', name: '🎫•ticket' },
+      { id: '1535851098265354250', name: '📢•anuncios' },
+      { id: '1535858680661147738', name: '📖•leia' },
+      { id: '1536069820980920320', name: '💳•infoscc' },
+      { id: '1536069894624387233', name: '💳•consul' },
+      { id: '1536117368688738325', name: 'registro-de-entrada' },
+      { id: '1536117421927170138', name: 'registro-de-saida' },
+      { id: '1536488704947003472', name: '❌•lotters' },
+      { id: '1557502552663138345', name: '🍊•laras' },
+      { id: '1557595890586230816', name: '🦇•btmob' },
+      { id: '1568800126409904210', name: 'setup-geral' },
+      { id: '1568803418238361801', name: '🔗•sites-aprovações' },
+      { id: '1568803968069402764', name: '🔥•dicas-aprovações' },
+      { id: '1570169573179920536', name: 'cmd' },
+      { id: '1570490075454771335', name: 'ticket' },
+      { id: '1570519775346688060', name: 'ticket' },
+    ];
+    let state = { status: null, catalogs: [], orders: [], targets: [], pins: [], channels: FALLBACK_CHANNELS };
     let chartStatus = null, chartCatalog = null;
     let ordersPage = 1;
     let dashOrdersPage = 1;
@@ -746,7 +765,8 @@
         state.orders = await api('/api/orders' + q);
         state.targets = await api('/api/targets');
         state.pins = await api('/api/pins');
-        state.channels = await api('/api/channels');
+        const fetchedChannels = await api('/api/channels');
+        state.channels = (Array.isArray(fetchedChannels) && fetchedChannels.length > 0) ? fetchedChannels : FALLBACK_CHANNELS;
       } catch (e) {
         console.error(e);
       }
@@ -888,10 +908,12 @@
         return;
       }
       el.innerHTML =
-        '<table class="table"><thead><tr><th>Catálogo</th><th>Canal ID</th><th>Ações</th></tr></thead><tbody>' +
-        state.pins.map(p =>
-          '<tr><td>' + p.catalog + '</td><td class="text-xs" style="color:var(--muted);">' + p.channelId + '</td><td class="flex gap-2"><button class="btn-dark" onclick="refreshPin(\'' + p.catalog + '\')">Atualizar</button><button class="btn-red" onclick="deletePin(\'' + p.catalog + '\',\'' + p.channelId + '\')">Remover</button></td></tr>'
-        ).join('') +
+        '<table class="table"><thead><tr><th>Catálogo</th><th>Canal do Discord</th><th>Ações</th></tr></thead><tbody>' +
+        state.pins.map(p => {
+          const ch = (state.channels || []).find(c => c.id === p.channelId);
+          const chLabel = ch ? ('#' + esc(ch.name) + ' (' + esc(p.channelId) + ')') : esc(p.channelId);
+          return '<tr><td class="font-semibold">' + esc(p.catalog) + '</td><td class="text-xs" style="color:var(--muted);">' + chLabel + '</td><td class="flex gap-2"><button class="btn-dark" onclick="refreshPin(\'' + esc(p.catalog) + '\')">Atualizar</button><button class="btn-red" onclick="deletePin(\'' + esc(p.catalog) + '\',\'' + esc(p.channelId) + '\')">Remover</button></td></tr>';
+        }).join('') +
         '</tbody></table>';
     }
 
@@ -1172,9 +1194,17 @@
       } catch (e) { toast(e.message); }
     }
 
-    function openPinModal() {
-      document.getElementById('pinCatalog').innerHTML = state.catalogs.map(c => '<option value="' + c.name + '">' + c.name + '</option>').join('');
-      document.getElementById('pinChannel').innerHTML = state.channels.map(c => '<option value="' + c.id + '">#' + c.name + '</option>').join('');
+    async function openPinModal() {
+      if (!state.channels || state.channels.length === 0) {
+        try {
+          const chs = await api('/api/channels');
+          state.channels = (Array.isArray(chs) && chs.length > 0) ? chs : FALLBACK_CHANNELS;
+        } catch (e) {
+          state.channels = FALLBACK_CHANNELS;
+        }
+      }
+      document.getElementById('pinCatalog').innerHTML = state.catalogs.map(c => '<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>').join('');
+      document.getElementById('pinChannel').innerHTML = state.channels.map(c => '<option value="' + esc(c.id) + '">#' + esc(c.name) + '</option>').join('');
       openModal('modalPin');
     }
 

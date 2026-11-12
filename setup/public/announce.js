@@ -5,9 +5,15 @@
   if (!cat || !cat.products || cat.products.length === 0) { el.innerHTML = '<div class="text-xs" style="color:var(--muted);">Sem produtos</div>'; return; }
   el.innerHTML = cat.products.map(p => '<label class="flex items-center gap-2 text-sm"><input type="checkbox" class="ann-prod" value="' + p.name + '" checked> ' + p.name + ' (' + money(p.price) + ')</label>').join('');
 }
-function openAnnounceModal() {
+async function openAnnounceModal() {
+  if (!state.channels || state.channels.length === 0) {
+    try {
+      const chs = await api('/api/channels');
+      if (Array.isArray(chs) && chs.length > 0) state.channels = chs;
+    } catch (e) {}
+  }
   document.getElementById('annCatalog').innerHTML = state.catalogs.map(c => '<option value="' + c.name + '">' + c.name + '</option>').join('');
-  document.getElementById('annChannel').innerHTML = state.channels.map(c => '<option value="' + c.id + '">#' + c.name + '</option>').join('');
+  document.getElementById('annChannel').innerHTML = (state.channels || []).map(c => '<option value="' + c.id + '">#' + c.name + '</option>').join('');
   document.getElementById('annMessage').value = '';
   document.getElementById('annBanner').value = '';
   renderAnnounceProducts();

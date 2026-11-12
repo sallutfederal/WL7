@@ -39,12 +39,32 @@ const DEFAULT_PRODUCTS = {
     { name: 'SUMUP', price: 120, description: '', stock: 1 },
   ],
 };
+const DEFAULT_CHANNELS = [
+  { id: '1535851044557557850', name: '🏆•referências' },
+  { id: '1535851073670090842', name: '🎫•ticket' },
+  { id: '1535851098265354250', name: '📢•anuncios' },
+  { id: '1535858680661147738', name: '📖•leia' },
+  { id: '1536069820980920320', name: '💳•infoscc' },
+  { id: '1536069894624387233', name: '💳•consul' },
+  { id: '1536117368688738325', name: 'registro-de-entrada' },
+  { id: '1536117421927170138', name: 'registro-de-saida' },
+  { id: '1536488704947003472', name: '❌•lotters' },
+  { id: '1557502552663138345', name: '🍊•laras' },
+  { id: '1557595890586230816', name: '🦇•btmob' },
+  { id: '1568800126409904210', name: 'setup-geral' },
+  { id: '1568803418238361801', name: '🔗•sites-aprovações' },
+  { id: '1568803968069402764', name: '🔥•dicas-aprovações' },
+  { id: '1570169573179920536', name: 'cmd' },
+  { id: '1570490075454771335', name: 'ticket' },
+  { id: '1570519775346688060', name: 'ticket' },
+];
 const DEFAULT_CONFIG = {
   botName: 'WL7 STORE',
   botAvatar: '',
   botBanner: '',
   currency: 'BRL',
   catalogs: DEFAULT_CATALOGS.map(n => ({ name: n, description: '', intro: '', products: DEFAULT_PRODUCTS[n] || [] })),
+  channels: DEFAULT_CHANNELS,
   orders: [],
   announces: [],
   targets: [],
@@ -1324,7 +1344,6 @@ function getDateKeyBRT(dateInput) {
       } catch (e) {}
     }
     if (!channelId) return res.status(400).json({ error: 'channelId required' });
-    const channel = await client.channels.fetch(channelId);
     try {
       const opts = (selected || []).map(name => { const p = (cat.products || []).find(x => x.name === name); if (!p) return null; return new (require('discord.js').StringSelectMenuOptionBuilder)().setLabel(p.name.slice(0,100)).setDescription((money(p.price) + (p.description ? ' - ' + p.description.slice(0,60) : '')).slice(0,100)).setValue(p.name.slice(0,100)); }).filter(Boolean);
       if (opts.length === 0) opts.push(new (require('discord.js').StringSelectMenuOptionBuilder)().setLabel('Sem produtos').setValue('__none__'));
@@ -1332,37 +1351,102 @@ function getDateKeyBRT(dateInput) {
       const up = new (require('discord.js').ButtonBuilder)().setCustomId('announce:up:' + announceId).setLabel('Voltar').setStyle(2).setEmoji('⬆️');
       const comps = [new (require('discord.js').ActionRowBuilder)().addComponents(menu), new (require('discord.js').ActionRowBuilder)().addComponents(up)];
       const content = '@everyone ' + (customMsg || ('Catalogo ' + cat.name.toUpperCase() + ' disponivel!'));
-      const announceMsg = { content: content, embeds: [catalogEmbed(cat)], components: comps, allowedMentions: { parse: ['everyone'] } };
-      let msg;
-      if (bannerPosition === 'top' && bannerFile) {
-        await channel.send({ files: [bannerFile], allowedMentions: { parse: [] } });
-        msg = await channel.send(announceMsg);
-      } else if (bannerFile) {
-        msg = await channel.send(announceMsg);
-        await channel.send({ files: [bannerFile], allowedMentions: { parse: [] } });
+      let msgId = null;
+      if (client.isReady()) {
+        const channel = await client.channels.fetch(channelId);
+        const announceMsg = { content: content, embeds: [catalogEmbed(cat)], components: comps, allowedMentions: { parse: ['everyone'] } };
+        let msg;
+        if (bannerPosition === 'top' && bannerFile) {
+          await channel.send({ files: [bannerFile], allowedMentions: { parse: [] } });
+          msg = await channel.send(announceMsg);
+        } else if (bannerFile) {
+          msg = await channel.send(announceMsg);
+          await channel.send({ files: [bannerFile], allowedMentions: { parse: [] } });
+        } else {
+          msg = await channel.send(announceMsg);
+        }
+        msgId = msg.id;
+      } else if (process.env.BOT_TOKEN) {
+        const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+        const bodyPayload = {
+          content: content,
+          embeds: [catalogEmbed(cat).toJSON()],
+          components: comps.map(c => c.toJSON()),
+          allowed_mentions: { parse: ['everyone'] },
+        };
+        const msg = await rest.post(Routes.channelMessages(channelId), { body: bodyPayload });
+        msgId = msg.id;
       } else {
-        msg = await channel.send(announceMsg);
+        return res.status(500).json({ error: 'BOT_TOKEN não configurado neste ambiente' });
       }
-      cfg.announces.push({ id: announceId, catalog: cat.name, channelId: channel.id, messageId: msg.id, message: customMsg, products: selected, createdAt: new Date().toISOString() });
+      cfg.announces.push({ id: announceId, catalog: cat.name, channelId: channelId, messageId: msgId, message: customMsg, products: selected, createdAt: new Date().toISOString() });
       saveConfig(cfg);
       res.json({ ok: true, id: announceId });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
-  app.get('/api/channels', (req, res) => {
-    const guild = client.guilds.cache.first();
-    if (!guild) return res.json([]);
-    const chans = guild.channels.cache.filter(c => c.type === ChannelType.GuildText).map(c => ({ id: c.id, name: c.name }));
-    res.json(chans);
+  app.get('/api/channels', async (req, res) => {
+    try {
+      const guild = client.guilds.cache.first();
+      if (guild) {
+        if (guild.channels.cache.size === 0) {
+          await guild.channels.fetch().catch(() => {});
+        }
+        const chans = guild.channels.cache
+          .filter(c => c && (c.type === ChannelType.GuildText || c.type === ChannelType.GuildAnnouncement || c.type === 0 || c.type === 5))
+          .map(c => ({ id: c.id, name: c.name }));
+        if (chans.length > 0) {
+          cfg.channels = chans;
+          return res.json(chans);
+        }
+      }
+      if (process.env.BOT_TOKEN) {
+        const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+        const guilds = await rest.get(Routes.userGuilds());
+        if (Array.isArray(guilds) && guilds.length > 0) {
+          const rawChans = await rest.get(Routes.guildChannels(guilds[0].id));
+          const chans = (rawChans || [])
+            .filter(c => c && (c.type === 0 || c.type === 5))
+            .map(c => ({ id: c.id, name: c.name }));
+          if (chans.length > 0) {
+            cfg.channels = chans;
+            return res.json(chans);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('channels fetch err:', e.message);
+    }
+    res.json((Array.isArray(cfg.channels) && cfg.channels.length > 0) ? cfg.channels : DEFAULT_CHANNELS);
   });
   app.get('/api/pins', (req, res) => res.json(cfg.pins));
   app.post('/api/pin', async (req, res) => {
     const cat = getCatalog(req.body.catalog);
     if (!cat) return res.status(404).json({ error: 'catalog not found' });
+    const channelId = req.body.channelId;
+    if (!channelId) return res.status(400).json({ error: 'channelId required' });
     try {
-      const channel = await client.channels.fetch(req.body.channelId);
-      const msg = await channel.send({ content: pinnedContent(cat), embeds: [], components: pinnedSelectMenu(cat), allowedMentions: { parse: [] } });
-      try { await msg.pin(); } catch (e) {}
-      cfg.pins.push({ catalog: cat.name, channelId: channel.id, messageId: msg.id });
+      let msgId = null;
+      if (client.isReady()) {
+        const channel = await client.channels.fetch(channelId);
+        const msg = await channel.send({ content: pinnedContent(cat), embeds: [], components: pinnedSelectMenu(cat), allowedMentions: { parse: [] } });
+        try { await msg.pin(); } catch (e) {}
+        msgId = msg.id;
+      } else if (process.env.BOT_TOKEN) {
+        const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+        const msg = await rest.post(Routes.channelMessages(channelId), {
+          body: {
+            content: pinnedContent(cat),
+            embeds: [],
+            components: pinnedSelectMenu(cat).map(c => c.toJSON()),
+            allowed_mentions: { parse: [] },
+          },
+        });
+        try { await rest.put(Routes.channelPin(channelId, msg.id)); } catch (e) {}
+        msgId = msg.id;
+      } else {
+        return res.status(500).json({ error: 'BOT_TOKEN não configurado neste ambiente' });
+      }
+      cfg.pins.push({ catalog: cat.name, channelId: channelId, messageId: msgId });
       saveConfig(cfg);
       res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -1373,10 +1457,16 @@ function getDateKeyBRT(dateInput) {
     const toRemove = cfg.pins.filter(p => p.catalog.toLowerCase() === String(catName).toLowerCase() && (!channelId || p.channelId === channelId));
     for (const p of toRemove) {
       try {
-        const ch = await client.channels.fetch(p.channelId);
-        const m = await ch.messages.fetch(p.messageId);
-        await m.unpin().catch(()=>{});
-        await m.delete().catch(()=>{});
+        if (client.isReady()) {
+          const ch = await client.channels.fetch(p.channelId);
+          const m = await ch.messages.fetch(p.messageId);
+          await m.unpin().catch(()=>{});
+          await m.delete().catch(()=>{});
+        } else if (process.env.BOT_TOKEN) {
+          const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+          await rest.delete(Routes.channelPin(p.channelId, p.messageId)).catch(()=>{});
+          await rest.delete(Routes.channelMessage(p.channelId, p.messageId)).catch(()=>{});
+        }
       } catch (e) {}
     }
     cfg.pins = cfg.pins.filter(p => !toRemove.includes(p));
@@ -1390,10 +1480,21 @@ function getDateKeyBRT(dateInput) {
     let updated = 0;
     for (const p of pins) {
       try {
-        const ch = await client.channels.fetch(p.channelId);
-        const m = await ch.messages.fetch(p.messageId);
-        await m.edit({ content: pinnedContent(cat), components: pinnedSelectMenu(cat) });
-        updated++;
+        if (client.isReady()) {
+          const ch = await client.channels.fetch(p.channelId);
+          const m = await ch.messages.fetch(p.messageId);
+          await m.edit({ content: pinnedContent(cat), components: pinnedSelectMenu(cat) });
+          updated++;
+        } else if (process.env.BOT_TOKEN) {
+          const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+          await rest.patch(Routes.channelMessage(p.channelId, p.messageId), {
+            body: {
+              content: pinnedContent(cat),
+              components: pinnedSelectMenu(cat).map(c => c.toJSON()),
+            },
+          });
+          updated++;
+        }
       } catch (e) {}
     }
     res.json({ ok: true, updated });
