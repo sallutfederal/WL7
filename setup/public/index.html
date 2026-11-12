@@ -11,32 +11,32 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg: #0a0a0f;
-      --bg2: #14141a;
-      --bg3: #1e1e26;
-      --border: #2a2a35;
-      --text: #e8e8e8;
-      --muted: #8a8a95;
-      --accent: #d4af37;
-      --accent2: #ffd700;
-      --green: #22c55e;
+      --bg: #09090b;
+      --bg2: #101014;
+      --bg3: #18181e;
+      --border: #22222a;
+      --text: #f4f4f5;
+      --muted: #71717a;
+      --accent: #7c3aed;
+      --accent2: #a78bfa;
+      --green: #10b981;
       --red: #ef4444;
-      --blue: #3b82f6;
-      --yellow: #eab308;
+      --blue: #8b5cf6;
+      --yellow: #f59e0b;
     }
     body.light-mode {
-      --bg: #f5f5f7;
+      --bg: #fafafa;
       --bg2: #ffffff;
-      --bg3: #ececee;
-      --border: #d8d8dc;
-      --text: #1a1a1a;
-      --muted: #6b6b70;
-      --accent: #9a7a18;
-      --accent2: #b8860b;
-      --green: #16a34a;
+      --bg3: #f4f4f5;
+      --border: #e4e4e7;
+      --text: #09090b;
+      --muted: #71717a;
+      --accent: #6d28d9;
+      --accent2: #7c3aed;
+      --green: #059669;
       --red: #dc2626;
-      --blue: #2563eb;
-      --yellow: #ca8a04;
+      --blue: #7c3aed;
+      --yellow: #d97706;
     }
     * { box-sizing: border-box; }
     body {
@@ -45,9 +45,10 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
     .sidebar {
-      width: 260px;
+      width: 248px;
       background: var(--bg2);
       border-right: 1px solid var(--border);
       position: fixed;
@@ -61,77 +62,66 @@
     .nav-link {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 9px 14px;
-      border-radius: 12px;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 500;
       text-decoration: none;
-      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: background 0.15s ease, color 0.15s ease;
       cursor: pointer;
-      border: 1px solid transparent;
     }
     .nav-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 9px;
+      width: 20px;
+      height: 20px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      font-size: 18px;
-      transition: all 0.22s ease;
+      font-size: 17px;
+      color: inherit;
       flex-shrink: 0;
     }
     .nav-link:hover {
       background: var(--bg3);
       color: var(--text);
-      transform: translateX(2px);
-    }
-    .nav-link:hover .nav-icon {
-      border-color: rgba(212, 175, 55, 0.35);
-      color: var(--accent2);
-      background: rgba(212, 175, 55, 0.1);
     }
     .nav-link.active {
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(255, 215, 0, 0.05));
+      background: rgba(124, 58, 237, 0.12);
       color: var(--accent2);
-      border: 1px solid rgba(212, 175, 55, 0.42);
-      box-shadow: 0 4px 20px rgba(212, 175, 55, 0.1);
+      font-weight: 600;
     }
-    .nav-link.active .nav-icon {
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.28), rgba(255, 215, 0, 0.12));
-      border-color: rgba(255, 215, 0, 0.55);
-      color: var(--accent2);
-      box-shadow: 0 0 14px rgba(212, 175, 55, 0.28);
+    body.light-mode .nav-link.active {
+      background: rgba(109, 40, 217, 0.08);
+      color: var(--accent);
     }
     .kpi-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 13px;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 23px;
+      font-size: 18px;
+      color: var(--muted);
+      background: var(--bg3);
+      border: 1px solid var(--border);
       flex-shrink: 0;
-      backdrop-filter: blur(8px);
     }
-    .brand-crest {
-      width: 56px;
-      height: 56px;
-      margin: 0 auto 10px;
-      border-radius: 16px;
-      display: flex;
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at 30% 25%, rgba(255, 215, 0, 0.24), rgba(212, 175, 55, 0.06) 70%);
-      border: 1px solid rgba(255, 215, 0, 0.45);
-      box-shadow: 0 0 24px rgba(212, 175, 55, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      background: rgba(124, 58, 237, 0.14);
+      border: 1px solid rgba(124, 58, 237, 0.32);
+      color: var(--accent2);
+      flex-shrink: 0;
     }
     .main-area {
-      margin-left: 260px;
+      margin-left: 248px;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -139,7 +129,7 @@
     .topbar {
       background: var(--bg2);
       border-bottom: 1px solid var(--border);
-      padding: 16px 32px;
+      padding: 14px 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -153,129 +143,136 @@
     .card {
       background: var(--bg2);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
+      border-radius: 10px;
+      padding: 18px;
+    }
+    body.light-mode .card {
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     }
     .input {
       width: 100%;
       background: var(--bg3);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 14px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 13.5px;
       outline: none;
+      transition: border-color 0.15s ease;
     }
-    .input:focus { border-color: var(--accent2); }
+    .input:focus { border-color: var(--accent); }
     .btn-gold {
-      background: linear-gradient(135deg, #b8941f, #ffd700);
-      color: #000;
-      font-weight: 600;
-      padding: 9px 18px;
-      border-radius: 10px;
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 8px;
       font-size: 13px;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       cursor: pointer;
-      transition: filter 0.2s;
+      transition: background 0.15s ease, opacity 0.15s ease;
     }
-    .btn-gold:hover { filter: brightness(1.1); }
+    .btn-gold:hover { background: #6d28d9; }
     .btn-dark {
       background: var(--bg3);
       border: 1px solid var(--border);
       color: var(--text);
       font-weight: 500;
       padding: 8px 14px;
-      border-radius: 10px;
+      border-radius: 8px;
       font-size: 13px;
       cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease;
     }
-    .btn-dark:hover { border-color: var(--accent); }
+    .btn-dark:hover { border-color: var(--muted); }
     .btn-red {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      color: #ef4444;
-      font-weight: 600;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: var(--red);
+      font-weight: 500;
       padding: 6px 12px;
-      border-radius: 8px;
+      border-radius: 7px;
       font-size: 12px;
       cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
     }
-    .btn-red:hover { background: #ef4444; color: #fff; }
+    .btn-red:hover { background: var(--red); color: #fff; }
     .btn-green {
-      background: rgba(34, 197, 94, 0.15);
-      border: 1px solid rgba(34, 197, 94, 0.4);
-      color: #22c55e;
-      font-weight: 600;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: var(--green);
+      font-weight: 500;
       padding: 6px 12px;
-      border-radius: 8px;
+      border-radius: 7px;
       font-size: 12px;
       cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
     }
-    .btn-green:hover { background: #22c55e; color: #000; }
+    .btn-green:hover { background: var(--green); color: #fff; }
     .table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 14px;
+      font-size: 13.5px;
     }
     .table th {
       text-align: left;
-      padding: 12px;
+      padding: 10px 12px;
       font-size: 11px;
+      font-weight: 500;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--accent);
+      letter-spacing: 0.6px;
+      color: var(--muted);
       border-bottom: 1px solid var(--border);
     }
     .table td {
-      padding: 12px;
+      padding: 11px 12px;
       border-bottom: 1px solid var(--border);
     }
-    .badge {
-      padding: 3px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
+    .table tbody tr:last-child td {
+      border-bottom: none;
     }
-    .badge-pending { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); }
-    .badge-paid { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); }
-    .badge-delivered { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
-    .badge-cancelled, .badge-expired { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .badge {
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .badge-pending { background: rgba(245, 158, 11, 0.12); color: var(--yellow); border: 1px solid rgba(245, 158, 11, 0.22); }
+    .badge-paid { background: rgba(16, 185, 129, 0.12); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.22); }
+    .badge-delivered { background: rgba(139, 92, 246, 0.12); color: var(--accent2); border: 1px solid rgba(139, 92, 246, 0.22); }
+    .badge-cancelled, .badge-expired { background: rgba(239, 68, 68, 0.12); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.22); }
     .empty {
       text-align: center;
-      padding: 36px 16px;
+      padding: 32px 16px;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13.5px;
     }
     .modal-bg {
-      background: rgba(0, 0, 0, 0.72);
-      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.68);
+      backdrop-filter: blur(3px);
     }
-    .text-accent { color: var(--accent2); }
+    .text-accent { color: var(--text); }
   </style>
 </head>
 <body>
 
   <!-- Sidebar -->
-  <aside class="sidebar p-6">
-    <div class="text-center pb-6 mb-6" style="border-bottom: 1px solid var(--border);">
-      <div class="brand-crest">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 3L8.5 8.5L12 6.5L15.5 8.5L20 3L19 11.5L21 15L16.5 18.5L12 21.5L7.5 18.5L3 15L5 11.5L4 3Z" fill="url(#wl7_gold)" fill-opacity="0.22" stroke="url(#wl7_gold)" stroke-width="1.6" stroke-linejoin="round"/>
-          <path d="M8.5 13L10.5 14.5M15.5 13L13.5 14.5M12 16.5L10.5 18H13.5L12 16.5Z" stroke="#FFD700" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          <defs>
-            <linearGradient id="wl7_gold" x1="3" y1="3" x2="21" y2="21.5" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#FFE066"/>
-              <stop offset="1" stop-color="#B8860B"/>
-            </linearGradient>
-          </defs>
+  <aside class="sidebar p-5">
+    <div class="flex items-center gap-3 pb-5 mb-5" style="border-bottom: 1px solid var(--border);">
+      <div class="brand-mark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 3L8.5 8.5L12 6.5L15.5 8.5L20 3L19 11.5L21 15L16.5 18.5L12 21.5L7.5 18.5L3 15L5 11.5L4 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
         </svg>
       </div>
-      <h1 id="botNameTop" class="text-lg font-extrabold tracking-wider" style="color: var(--accent2);">WL7 STORE</h1>
-      <p class="text-xs uppercase tracking-widest mt-1" style="color: var(--muted);">Painel de Controle</p>
+      <div>
+        <h1 id="botNameTop" class="text-sm font-semibold tracking-wide" style="color: var(--text);">WL7 STORE</h1>
+        <p class="text-[11px]" style="color: var(--muted);">Painel Administrativo</p>
+      </div>
     </div>
 
-    <nav class="space-y-1.5 flex-1">
+    <nav class="space-y-1 flex-1">
       <a href="#" data-view="dashboard" class="nav-link active"><span class="nav-icon"><i class="ph-duotone ph-squares-four"></i></span> Dashboard</a>
       <a href="#" data-view="catalogs" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-stack"></i></span> Catálogos</a>
       <a href="#" data-view="products" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-package"></i></span> Produtos</a>
@@ -289,7 +286,7 @@
 
     <div class="pt-4 space-y-2" style="border-top: 1px solid var(--border);">
       <button class="btn-gold w-full flex items-center justify-center gap-2" onclick="openAnnounceModal()">
-        <i class="ph-duotone ph-megaphone text-lg"></i> Anunciar Catálogo
+        <i class="ph-duotone ph-megaphone text-base"></i> Anunciar Catálogo
       </button>
       <div class="grid grid-cols-2 gap-2">
         <button id="themeToggle" class="btn-dark w-full text-xs" onclick="toggleTheme()">Modo claro</button>
@@ -303,38 +300,38 @@
     <!-- Topbar -->
     <header class="topbar flex-wrap">
       <div class="flex items-center gap-4">
-        <h2 id="viewTitle" class="text-2xl font-bold" style="color: var(--accent2);">Dashboard</h2>
-        <div class="flex items-center gap-1 px-2 py-1 rounded-xl" style="background: var(--bg3); border: 1px solid var(--border);">
-          <button class="btn-dark" style="padding: 4px 10px; font-size: 12px;" onclick="stepDay(-1)" title="Dia anterior"><i class="ph-bold ph-caret-left"></i></button>
-          <input id="dayPicker" type="date" class="input" style="width: 142px; padding: 4px 8px; font-size: 12px; border: none; background: transparent;" onchange="setExactDay(this.value)" />
-          <button class="btn-dark" style="padding: 4px 10px; font-size: 12px;" onclick="stepDay(1)" title="Próximo dia"><i class="ph-bold ph-caret-right"></i></button>
-          <button id="btnToday" class="btn-gold flex items-center gap-1" style="padding: 4px 10px; font-size: 11px;" onclick="goToday()"><i class="ph-bold ph-calendar-check"></i> Hoje</button>
+        <h2 id="viewTitle" class="text-lg font-semibold" style="color: var(--text);">Dashboard</h2>
+        <div class="flex items-center gap-1 px-1.5 py-1 rounded-lg" style="background: var(--bg3); border: 1px solid var(--border);">
+          <button class="btn-dark" style="padding: 4px 8px; font-size: 11px; border: none;" onclick="stepDay(-1)" title="Dia anterior"><i class="ph-bold ph-caret-left"></i></button>
+          <input id="dayPicker" type="date" class="input" style="width: 134px; padding: 3px 6px; font-size: 12px; border: none; background: transparent;" onchange="setExactDay(this.value)" />
+          <button class="btn-dark" style="padding: 4px 8px; font-size: 11px; border: none;" onclick="stepDay(1)" title="Próximo dia"><i class="ph-bold ph-caret-right"></i></button>
+          <button id="btnToday" class="btn-gold flex items-center gap-1" style="padding: 4px 10px; font-size: 11px;" onclick="goToday()">Hoje</button>
         </div>
-        <span id="dayLabel" class="text-xs font-semibold" style="color: var(--accent);"></span>
+        <span id="dayLabel" class="text-xs font-medium" style="color: var(--muted);"></span>
       </div>
       <div class="flex items-center gap-6 text-xs">
-        <div><span style="color: var(--muted);">Receita do Dia:</span> <strong id="tRevenue" style="color: var(--accent2);">R$ 0,00</strong></div>
+        <div><span style="color: var(--muted);">Receita do Dia:</span> <strong id="tRevenue" style="color: var(--text);">R$ 0,00</strong></div>
         <div><span style="color: var(--muted);">Pagos Hoje:</span> <strong id="tPaid" style="color: var(--green);">0</strong></div>
-        <div><span style="color: var(--muted);">Pendentes:</span> <strong id="tPending" style="color: var(--yellow);">0</strong></div>
-        <div><span style="color: var(--muted);">Produtos:</span> <strong id="tProducts" style="color: var(--blue);">0</strong></div>
+        <div><span style="color: var(--muted);">Pendentes:</span> <strong id="tPending" style="color: var(--muted);">0</strong></div>
+        <div><span style="color: var(--muted);">Produtos:</span> <strong id="tProducts" style="color: var(--accent2);">0</strong></div>
       </div>
     </header>
 
-    <main class="p-8 flex-1">
+    <main class="p-7 flex-1">
       <!-- View: Dashboard -->
       <section id="view-dashboard" class="view active space-y-6">
         <div id="cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"></div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="card">
-            <h3 class="text-sm font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style="color: var(--accent2);"><i class="ph-duotone ph-chart-donut text-lg"></i> Pedidos por Status</h3>
-            <div style="height: 260px; display: flex; align-items: center; justify-content: center;">
+            <h3 class="text-xs font-medium uppercase tracking-wider mb-4 flex items-center gap-2" style="color: var(--muted);"><i class="ph-duotone ph-chart-donut text-base" style="color: var(--accent2);"></i> Pedidos por Status</h3>
+            <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
               <canvas id="chartStatus"></canvas>
             </div>
           </div>
           <div class="card">
-            <h3 class="text-sm font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style="color: var(--accent2);"><i class="ph-duotone ph-chart-bar text-lg"></i> Receita por Catálogo</h3>
-            <div style="height: 260px;">
+            <h3 class="text-xs font-medium uppercase tracking-wider mb-4 flex items-center gap-2" style="color: var(--muted);"><i class="ph-duotone ph-chart-bar text-base" style="color: var(--accent2);"></i> Receita por Catálogo</h3>
+            <div style="height: 250px;">
               <canvas id="chartCatalog"></canvas>
             </div>
           </div>
@@ -342,7 +339,7 @@
 
         <div class="card">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-semibold uppercase tracking-wider flex items-center gap-2" style="color: var(--accent2);"><i class="ph-duotone ph-pix-logo text-lg"></i> Últimos Pedidos (PIX PingoCash)</h3>
+            <h3 class="text-xs font-medium uppercase tracking-wider flex items-center gap-2" style="color: var(--muted);"><i class="ph-duotone ph-pix-logo text-base" style="color: var(--accent2);"></i> Últimos Pedidos (PIX PingoCash)</h3>
             <button class="btn-dark text-xs flex items-center gap-1.5" onclick="refresh().then(renderAll)"><i class="ph-bold ph-arrows-clockwise"></i> Atualizar</button>
           </div>
           <div id="recentOrders"></div>
@@ -353,7 +350,7 @@
       <section id="view-catalogs" class="view space-y-6">
         <div class="flex justify-between items-center">
           <p class="text-sm" style="color: var(--muted);">Gerencie os catálogos disponíveis no bot Discord.</p>
-          <button class="btn-gold flex items-center gap-1.5" onclick="openCatalogModal()"><i class="ph-bold ph-plus-circle text-base"></i> Novo Catálogo</button>
+          <button class="btn-gold flex items-center gap-1.5" onclick="openCatalogModal()"><i class="ph-bold ph-plus text-sm"></i> Novo Catálogo</button>
         </div>
         <div class="card" id="catalogsTable"></div>
       </section>
@@ -367,7 +364,7 @@
               <option value="">Todos</option>
             </select>
           </div>
-          <button class="btn-gold flex items-center gap-1.5" onclick="openProductModal()"><i class="ph-bold ph-plus-circle text-base"></i> Novo Produto</button>
+          <button class="btn-gold flex items-center gap-1.5" onclick="openProductModal()"><i class="ph-bold ph-plus text-sm"></i> Novo Produto</button>
         </div>
         <div class="card" id="productsTable"></div>
       </section>
@@ -391,61 +388,61 @@
       <!-- View: Fake Sales -->
       <section id="view-fakesales" class="view space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div class="card flex items-center justify-between" style="border: 1px solid var(--accent);">
+          <div class="card flex items-center justify-between">
             <div>
-              <div class="text-xs uppercase tracking-wider" style="color: var(--muted);">Status do Disparo Automático</div>
+              <div class="text-xs" style="color: var(--muted);">Status do Disparo Automático</div>
               <div id="fsStatusBadge" class="mt-2"></div>
-              <div id="fsCountdown" class="text-xs mt-2 font-semibold" style="color: var(--accent2);"></div>
+              <div id="fsCountdown" class="text-xs mt-2 font-medium" style="color: var(--muted);"></div>
             </div>
-            <div class="kpi-icon" style="color: var(--accent2); background: rgba(212,175,55,0.16); border: 1px solid rgba(255,215,0,0.4); box-shadow: 0 0 18px rgba(212,175,55,0.2);"><i class="ph-duotone ph-lightning"></i></div>
+            <div class="kpi-icon"><i class="ph-duotone ph-lightning"></i></div>
           </div>
           <div class="card flex items-center justify-between">
             <div>
-              <div class="text-xs uppercase tracking-wider" style="color: var(--muted);">Produtos Cadastrados Elegíveis</div>
-              <div id="fsProdCount" class="text-2xl font-bold mt-1" style="color: var(--blue);">0</div>
+              <div class="text-xs" style="color: var(--muted);">Produtos Cadastrados Elegíveis</div>
+              <div id="fsProdCount" class="text-2xl font-semibold mt-1" style="color: var(--text);">0</div>
               <div class="text-xs mt-1" style="color: var(--muted);">Se 0 cadastrados, não envia nada</div>
             </div>
-            <div class="kpi-icon" style="color: var(--blue); background: rgba(59,130,246,0.14); border: 1px solid rgba(59,130,246,0.38);"><i class="ph-duotone ph-cube-focus"></i></div>
+            <div class="kpi-icon"><i class="ph-duotone ph-cube-focus"></i></div>
           </div>
           <div class="card flex items-center justify-between">
             <div>
-              <div class="text-xs uppercase tracking-wider" style="color: var(--muted);">Notificações Enviadas</div>
-              <div id="fsTotalSent" class="text-2xl font-bold mt-1" style="color: var(--green);">0</div>
+              <div class="text-xs" style="color: var(--muted);">Notificações Enviadas</div>
+              <div id="fsTotalSent" class="text-2xl font-semibold mt-1" style="color: var(--text);">0</div>
               <div id="fsLastSent" class="text-xs mt-1" style="color: var(--muted);">Nenhum envio ainda</div>
             </div>
-            <div class="kpi-icon" style="color: var(--green); background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.38);"><i class="ph-duotone ph-paper-plane-tilt"></i></div>
+            <div class="kpi-icon"><i class="ph-duotone ph-paper-plane-tilt"></i></div>
           </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="card space-y-4">
-            <h3 class="text-lg font-bold flex items-center gap-2" style="color: var(--accent2);"><i class="ph-duotone ph-faders text-xl"></i>Configurar Vendas Fake</h3>
+            <h3 class="text-sm font-semibold flex items-center gap-2" style="color: var(--text);"><i class="ph-duotone ph-faders text-base" style="color: var(--accent2);"></i>Configurar Vendas Fake</h3>
             <p class="text-xs" style="color: var(--muted);">
               Envia notificações automáticas de vendas para o canal selecionado sorteando apenas entre os produtos realmente cadastrados no sistema, em intervalos de <strong>tempo quebrado</strong> (minutos e segundos irregulares para parecer 100% natural).
             </p>
             <div>
-              <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Canal do Discord para receber as notificações</label>
+              <label class="block text-xs mb-1" style="color: var(--muted);">Canal do Discord para receber as notificações</label>
               <select id="fsChannel" class="input"></select>
             </div>
             <div>
-              <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Sortear produtos de qual catálogo?</label>
+              <label class="block text-xs mb-1" style="color: var(--muted);">Sortear produtos de qual catálogo?</label>
               <select id="fsCatalog" class="input">
                 <option value="">Todos os Catálogos (Aleatório entre todos cadastrados)</option>
               </select>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Tempo Mínimo (Minutos)</label>
+                <label class="block text-xs mb-1" style="color: var(--muted);">Tempo Mínimo (Minutos)</label>
                 <input id="fsMinMin" type="number" step="0.5" min="0.5" class="input" value="2" />
               </div>
               <div>
-                <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Tempo Máximo (Minutos)</label>
+                <label class="block text-xs mb-1" style="color: var(--muted);">Tempo Máximo (Minutos)</label>
                 <input id="fsMaxMin" type="number" step="0.5" min="1" class="input" value="7" />
               </div>
             </div>
-            <div class="p-3 rounded-xl space-y-1" style="background: var(--bg3); border: 1px solid var(--border);">
-              <div class="text-xs uppercase tracking-wider" style="color: var(--muted);">Formato padrão da mensagem no Discord:</div>
-              <div class="font-mono text-sm font-bold" style="color: var(--accent2);">+1 &nbsp; NOME DO PRODUTO &nbsp; ENTREGUE &nbsp; @everyone</div>
+            <div class="p-3 rounded-lg space-y-1" style="background: var(--bg3); border: 1px solid var(--border);">
+              <div class="text-xs" style="color: var(--muted);">Formato padrão da mensagem no Discord:</div>
+              <div class="font-mono text-xs font-medium" style="color: var(--text);">+1 &nbsp; NOME DO PRODUTO &nbsp; ENTREGUE &nbsp; @everyone</div>
             </div>
             <div class="flex flex-wrap gap-2 pt-2">
               <button id="btnFsToggle" class="btn-gold flex-1 flex items-center justify-center gap-1.5" onclick="toggleFakeSales(true)">
@@ -461,13 +458,13 @@
           </div>
 
           <div class="card space-y-4">
-            <h3 class="text-lg font-bold flex items-center gap-2" style="color: var(--accent2);"><i class="ph-duotone ph-clock-counter-clockwise text-xl"></i>Últimas Notificações &amp; Produtos no Sorteio</h3>
+            <h3 class="text-sm font-semibold flex items-center gap-2" style="color: var(--text);"><i class="ph-duotone ph-clock-counter-clockwise text-base" style="color: var(--accent2);"></i>Últimas Notificações &amp; Produtos no Sorteio</h3>
             <div>
-              <div class="text-xs uppercase tracking-wider mb-2" style="color: var(--muted);">Produtos cadastrados disponíveis para sorteio:</div>
+              <div class="text-xs mb-2" style="color: var(--muted);">Produtos cadastrados disponíveis para sorteio:</div>
               <div id="fsEligibleList" class="flex flex-wrap gap-2"></div>
             </div>
-            <div class="pt-2" style="border-top: 1px solid var(--border);">
-              <div class="text-xs uppercase tracking-wider mb-2" style="color: var(--muted);">Histórico recente de envios (Tempo Quebrado):</div>
+            <div class="pt-3" style="border-top: 1px solid var(--border);">
+              <div class="text-xs mb-2" style="color: var(--muted);">Histórico recente de envios (Tempo Quebrado):</div>
               <div id="fsHistoryTable"></div>
             </div>
           </div>
@@ -1006,29 +1003,29 @@
     function renderDashboard() {
       if (!state.status) return;
       document.getElementById('cards').innerHTML =
-        '<div class="card" style="background: linear-gradient(135deg, rgba(212,175,55,.15), var(--bg2)); border: 1px solid var(--accent2);">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Receita Total</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--accent2);">' + money(state.status.revenue) + '</div></div><div class="kpi-icon" style="color:var(--accent2); background:rgba(212,175,55,0.16); border:1px solid rgba(255,215,0,0.4);"><i class="ph-duotone ph-currency-circle-dollar"></i></div></div>' +
-          '<div style="font-size:12px;margin-top:8px;color:var(--green);display:flex;align-items:center;gap:4px;"><i class="ph-bold ph-trend-up"></i> ' + state.status.paidOrders + ' pagos</div>' +
+        '<div class="card">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:12px;color:var(--muted);">Receita Total</div><div style="font-size:22px;font-weight:600;margin-top:6px;color:var(--text);">' + money(state.status.revenue) + '</div></div><div class="kpi-icon" style="color:var(--accent2);"><i class="ph-duotone ph-currency-circle-dollar"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:10px;color:var(--green);display:flex;align-items:center;gap:4px;"><i class="ph-bold ph-trend-up"></i> ' + state.status.paidOrders + ' pagos hoje</div>' +
         '</div>' +
-        '<div class="card" style="background: linear-gradient(135deg, rgba(34,197,94,.12), var(--bg2)); border: 1px solid var(--green);">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pedidos Pagos</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--green);">' + state.status.paidOrders + '</div></div><div class="kpi-icon" style="color:var(--green); background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.4);"><i class="ph-duotone ph-seal-check"></i></div></div>' +
-          '<div style="font-size:12px;margin-top:8px;color:var(--muted);">' + state.status.pendingOrders + ' pendentes</div>' +
+        '<div class="card">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:12px;color:var(--muted);">Pedidos Pagos</div><div style="font-size:22px;font-weight:600;margin-top:6px;color:var(--text);">' + state.status.paidOrders + '</div></div><div class="kpi-icon"><i class="ph-duotone ph-seal-check"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:10px;color:var(--muted);">' + state.status.pendingOrders + ' pendentes</div>' +
         '</div>' +
-        '<div class="card" style="background: linear-gradient(135deg, rgba(59,130,246,.12), var(--bg2)); border: 1px solid var(--blue);">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Produtos</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--blue);">' + state.status.products + '</div></div><div class="kpi-icon" style="color:var(--blue); background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4);"><i class="ph-duotone ph-cube-focus"></i></div></div>' +
-          '<div style="font-size:12px;margin-top:8px;color:var(--muted);">' + state.status.catalogs + ' catálogos</div>' +
+        '<div class="card">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:12px;color:var(--muted);">Produtos</div><div style="font-size:22px;font-weight:600;margin-top:6px;color:var(--text);">' + state.status.products + '</div></div><div class="kpi-icon"><i class="ph-duotone ph-cube-focus"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:10px;color:var(--muted);">' + state.status.catalogs + ' catálogos</div>' +
         '</div>' +
-        '<div class="card" style="background: linear-gradient(135deg, rgba(234,179,8,.12), var(--bg2)); border: 1px solid var(--yellow);">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pendentes</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--yellow);">' + state.status.pendingOrders + '</div></div><div class="kpi-icon" style="color:var(--yellow); background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.4);"><i class="ph-duotone ph-hourglass-medium"></i></div></div>' +
-          '<div style="font-size:12px;margin-top:8px;color:var(--yellow);">' + money(state.status.pendingRevenue || 0) + ' aguardando PIX</div>' +
+        '<div class="card">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:12px;color:var(--muted);">Pendentes</div><div style="font-size:22px;font-weight:600;margin-top:6px;color:var(--text);">' + state.status.pendingOrders + '</div></div><div class="kpi-icon"><i class="ph-duotone ph-hourglass-medium"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:10px;color:var(--muted);">' + money(state.status.pendingRevenue || 0) + ' aguardando PIX</div>' +
         '</div>' +
-        '<div class="card" style="background: linear-gradient(135deg, rgba(212,175,55,.12), var(--bg2)); border: 1px solid var(--accent);">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Bots</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--accent2);">' + state.status.targets + '</div></div><div class="kpi-icon" style="color:var(--accent2); background:rgba(212,175,55,0.15); border:1px solid rgba(212,175,55,0.4);"><i class="ph-duotone ph-cpu"></i></div></div>' +
-          '<div style="font-size:12px;margin-top:8px;color:var(--muted);">registrados</div>' +
+        '<div class="card">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:12px;color:var(--muted);">Bots</div><div style="font-size:22px;font-weight:600;margin-top:6px;color:var(--text);">' + state.status.targets + '</div></div><div class="kpi-icon"><i class="ph-duotone ph-cpu"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:10px;color:var(--muted);">registrados</div>' +
         '</div>' +
-        '<div class="card" style="background: linear-gradient(135deg, rgba(236,72,153,.12), var(--bg2)); border: 1px solid #ec4899;">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Fixadas</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:#ec4899;">' + state.status.pins + '</div></div><div class="kpi-icon" style="color:#ec4899; background:rgba(236,72,153,0.15); border:1px solid rgba(236,72,153,0.4);"><i class="ph-duotone ph-bookmark-simple"></i></div></div>' +
-          '<div style="font-size:12px;margin-top:8px;color:var(--muted);">mensagens ativas</div>' +
+        '<div class="card">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:12px;color:var(--muted);">Fixadas</div><div style="font-size:22px;font-weight:600;margin-top:6px;color:var(--text);">' + state.status.pins + '</div></div><div class="kpi-icon"><i class="ph-duotone ph-bookmark-simple"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:10px;color:var(--muted);">mensagens ativas</div>' +
         '</div>';
 
       const totalDashPages = Math.max(1, Math.ceil(state.orders.length / ORDERS_PER_PAGE));
@@ -1081,15 +1078,15 @@
         return '<span class="font-semibold">' + esc(p.name) + '</span>';
       }
       const bgStyle = img
-        ? "background-image: linear-gradient(90deg, rgba(10,10,15,0.86) 0%, rgba(10,10,15,0.45) 55%, rgba(10,10,15,0.82) 100%), url('" + esc(img) + "'); background-size: cover; background-position: center;"
-        : 'background: linear-gradient(135deg, rgba(212,175,55,0.12), var(--bg3)); border-style: dashed;';
+        ? "background-image: linear-gradient(90deg, rgba(9,9,11,0.88) 0%, rgba(9,9,11,0.45) 55%, rgba(9,9,11,0.84) 100%), url('" + esc(img) + "'); background-size: cover; background-position: center;"
+        : 'background: var(--bg3); border-style: dashed;';
       return (
-        '<div style="position:relative; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 16px; border-radius:12px; border:1px solid rgba(212,175,55,0.45); overflow:hidden; width:100%; height:' + sz.height + '; max-width:' + sz.maxWidth + '; ' + bgStyle + '">' +
-          '<div style="z-index:2; text-shadow: 0 2px 6px rgba(0,0,0,0.95);">' +
-            '<div style="font-weight:800; color:#fff; font-size:' + sz.fontSize + '; letter-spacing:0.4px;">' + esc(p.name) + '</div>' +
-            '<div style="font-size:11px; color:var(--accent2); font-weight:600;">' + money(p.price) + (img ? '' : ' • Sem foto') + '</div>' +
+        '<div style="position:relative; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px; border-radius:10px; border:1px solid var(--border); overflow:hidden; width:100%; height:' + sz.height + '; max-width:' + sz.maxWidth + '; ' + bgStyle + '">' +
+          '<div style="z-index:2; text-shadow: 0 1px 4px rgba(0,0,0,0.85);">' +
+            '<div style="font-weight:700; color:#fff; font-size:' + sz.fontSize + ';">' + esc(p.name) + '</div>' +
+            '<div style="font-size:11px; color:var(--accent2); font-weight:500;">' + money(p.price) + (img ? '' : ' • Sem foto') + '</div>' +
           '</div>' +
-          (img ? '<span class="badge" style="z-index:2; background:rgba(0,0,0,0.65); color:var(--accent2); border:1px solid rgba(212,175,55,0.4); font-size:10px;">' + esc((p.imageSize || 'medium').toUpperCase()) + '</span>' : '') +
+          (img ? '<span class="badge" style="z-index:2; background:rgba(0,0,0,0.65); color:var(--text); border:1px solid rgba(255,255,255,0.15); font-size:10px;">' + esc((p.imageSize || 'medium').toUpperCase()) + '</span>' : '') +
         '</div>'
       );
     }
@@ -1543,15 +1540,15 @@
           labels: ['Pendentes', 'Pagos', 'Entregues', 'Cancelados'],
           datasets: [{
             data: statusCounts,
-            backgroundColor: ['#fbbf24', '#22c55e', '#3b82f6', '#ef4444'],
+            backgroundColor: ['#52525b', '#8b5cf6', '#10b981', '#ef4444'],
             borderWidth: 0,
           }],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: '#8a8a95' } } },
-          cutout: '65%',
+          plugins: { legend: { position: 'bottom', labels: { color: '#71717a', boxWidth: 10 } } },
+          cutout: '70%',
         },
       });
 
@@ -1576,24 +1573,24 @@
             {
               label: 'Pago',
               data: cats.length ? cats.map(c => paidMap[c] || 0) : [0],
-              backgroundColor: '#22c55e',
-              borderRadius: 6,
+              backgroundColor: '#7c3aed',
+              borderRadius: 5,
             },
             {
-              label: 'Pendente (Teste)',
+              label: 'Pendente',
               data: cats.length ? cats.map(c => pendingMap[c] || 0) : [0],
-              backgroundColor: '#d4af37',
-              borderRadius: 6,
+              backgroundColor: '#3f3f46',
+              borderRadius: 5,
             },
           ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: true, labels: { color: '#8a8a95' } } },
+          plugins: { legend: { display: true, labels: { color: '#71717a', boxWidth: 10 } } },
           scales: {
-            x: { ticks: { color: '#8a8a95' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            y: { ticks: { color: '#8a8a95' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#71717a' }, grid: { color: 'rgba(113,113,122,0.08)' } },
+            y: { ticks: { color: '#71717a' }, grid: { color: 'rgba(113,113,122,0.08)' } },
           },
         },
       });

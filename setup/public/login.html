@@ -5,31 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login - WL7 STORE</title>
 <style>
-  :root { --bg: #0a0a0f; --bg2: #14141a; --border: #2a2a35; --text: #e8e8e8; --muted: #8a8a95; --accent: #d4af37; --accent2: #ffd700; --red: #ef4444; }
+  :root { --bg: #09090b; --bg2: #101014; --bg3: #18181e; --border: #22222a; --text: #f4f4f5; --muted: #71717a; --accent: #7c3aed; --accent2: #a78bfa; --red: #ef4444; }
+  body.light-mode { --bg: #fafafa; --bg2: #ffffff; --bg3: #f4f4f5; --border: #e4e4e7; --text: #09090b; --muted: #71717a; --accent: #6d28d9; --accent2: #7c3aed; --red: #dc2626; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-  .login-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
-  .logo { text-align: center; margin-bottom: 30px; }
-  .logo h1 { color: var(--accent2); font-size: 28px; font-weight: 800; letter-spacing: 2px; }
-  .logo p { color: var(--muted); font-size: 12px; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
-  .form-group { margin-bottom: 16px; }
-  .form-group label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
-  .input { width: 100%; background: var(--bg3, #1e1e26); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 8px; font-size: 14px; }
-  .input:focus { outline: none; border-color: var(--accent2); }
-  .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #000; margin-top: 8px; }
-  .btn:hover { filter: brightness(1.1); }
-  .error { color: var(--red); font-size: 13px; margin-top: 12px; text-align: center; display: none; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+  .login-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 36px; width: 100%; max-width: 380px; }
+  .logo { text-align: center; margin-bottom: 28px; }
+  .logo h1 { color: var(--text); font-size: 20px; font-weight: 600; letter-spacing: 0.5px; }
+  .logo p { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; font-weight: 500; }
+  .input { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 13.5px; transition: border-color 0.15s ease; }
+  .input:focus { outline: none; border-color: var(--accent); }
+  .btn { width: 100%; padding: 10px 14px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; font-size: 13.5px; font-weight: 500; cursor: pointer; background: var(--accent); color: #fff; margin-top: 8px; transition: background 0.15s ease; }
+  .btn:hover { background: #6d28d9; }
+  .error { color: var(--red); font-size: 12.5px; margin-top: 12px; text-align: center; display: none; }
   .brand-crest {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 14px;
-    border-radius: 18px;
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 12px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle at 30% 25%, rgba(255, 215, 0, 0.25), rgba(212, 175, 55, 0.06) 70%);
-    border: 1px solid rgba(255, 215, 0, 0.45);
-    box-shadow: 0 0 28px rgba(212, 175, 55, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    background: rgba(124, 58, 237, 0.12);
+    border: 1px solid rgba(124, 58, 237, 0.28);
+    color: var(--accent2);
   }
 </style>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -39,19 +40,12 @@
   <div class="login-box">
     <div class="logo">
       <div class="brand-crest">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 3L8.5 8.5L12 6.5L15.5 8.5L20 3L19 11.5L21 15L16.5 18.5L12 21.5L7.5 18.5L3 15L5 11.5L4 3Z" fill="url(#wl7_gold)" fill-opacity="0.22" stroke="url(#wl7_gold)" stroke-width="1.6" stroke-linejoin="round"/>
-          <path d="M8.5 13L10.5 14.5M15.5 13L13.5 14.5M12 16.5L10.5 18H13.5L12 16.5Z" stroke="#FFD700" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          <defs>
-            <linearGradient id="wl7_gold" x1="3" y1="3" x2="21" y2="21.5" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#FFE066"/>
-              <stop offset="1" stop-color="#B8860B"/>
-            </linearGradient>
-          </defs>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 3L8.5 8.5L12 6.5L15.5 8.5L20 3L19 11.5L21 15L16.5 18.5L12 21.5L7.5 18.5L3 15L5 11.5L4 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
         </svg>
       </div>
       <h1>WL7 STORE</h1>
-      <p><i class="ph-duotone ph-shield-check" style="vertical-align: middle; color: var(--accent2);"></i> Acesso Restrito</p>
+      <p><i class="ph-duotone ph-shield-check" style="vertical-align: middle; color: var(--accent2);"></i> Acesso Administrativo</p>
     </div>
     <form id="loginForm">
       <div class="form-group">
@@ -67,6 +61,7 @@
     </form>
   </div>
   <script>
+    if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const errEl = document.getElementById('errorMsg');
