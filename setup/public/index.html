@@ -218,6 +218,7 @@
       <a href="#" data-view="catalogs" class="nav-link"><i class="fa-solid fa-box-archive w-5 text-center"></i> Catálogos</a>
       <a href="#" data-view="products" class="nav-link"><i class="fa-solid fa-cart-shopping w-5 text-center"></i> Produtos</a>
       <a href="#" data-view="photos" class="nav-link"><i class="fa-solid fa-images w-5 text-center"></i> Fotos dos Produtos</a>
+      <a href="#" data-view="fakesales" class="nav-link"><i class="fa-solid fa-bolt w-5 text-center"></i> Vendas Fake</a>
       <a href="#" data-view="orders" class="nav-link"><i class="fa-solid fa-receipt w-5 text-center"></i> Pedidos</a>
       <a href="#" data-view="pins" class="nav-link"><i class="fa-solid fa-thumbtack w-5 text-center"></i> Mensagens Fixas</a>
       <a href="#" data-view="bots" class="nav-link"><i class="fa-solid fa-robot w-5 text-center"></i> Bots / Webhooks</a>
@@ -323,6 +324,92 @@
           </div>
         </div>
         <div id="photosContainer" class="space-y-6"></div>
+      </section>
+
+      <!-- View: Fake Sales -->
+      <section id="view-fakesales" class="view space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="card flex items-center justify-between" style="border: 1px solid var(--accent);">
+            <div>
+              <div class="text-xs uppercase tracking-wider" style="color: var(--muted);">Status do Disparo Automático</div>
+              <div id="fsStatusBadge" class="mt-2"></div>
+              <div id="fsCountdown" class="text-xs mt-2 font-semibold" style="color: var(--accent2);"></div>
+            </div>
+            <div class="text-3xl" style="color: var(--accent2);"><i class="fa-solid fa-bolt"></i></div>
+          </div>
+          <div class="card flex items-center justify-between">
+            <div>
+              <div class="text-xs uppercase tracking-wider" style="color: var(--muted);">Produtos Cadastrados Elegíveis</div>
+              <div id="fsProdCount" class="text-2xl font-bold mt-1" style="color: var(--blue);">0</div>
+              <div class="text-xs mt-1" style="color: var(--muted);">Se 0 cadastrados, não envia nada</div>
+            </div>
+            <div class="text-2xl" style="color: var(--blue);"><i class="fa-solid fa-boxes-stacked"></i></div>
+          </div>
+          <div class="card flex items-center justify-between">
+            <div>
+              <div class="text-xs uppercase tracking-wider" style="color: var(--muted);">Notificações Enviadas</div>
+              <div id="fsTotalSent" class="text-2xl font-bold mt-1" style="color: var(--green);">0</div>
+              <div id="fsLastSent" class="text-xs mt-1" style="color: var(--muted);">Nenhum envio ainda</div>
+            </div>
+            <div class="text-2xl" style="color: var(--green);"><i class="fa-solid fa-paper-plane"></i></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="card space-y-4">
+            <h3 class="text-lg font-bold" style="color: var(--accent2);"><i class="fa-solid fa-sliders mr-2"></i>Configurar Vendas Fake</h3>
+            <p class="text-xs" style="color: var(--muted);">
+              Envia notificações automáticas de vendas para o canal selecionado sorteando apenas entre os produtos realmente cadastrados no sistema, em intervalos de <strong>tempo quebrado</strong> (minutos e segundos irregulares para parecer 100% natural).
+            </p>
+            <div>
+              <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Canal do Discord para receber as notificações</label>
+              <select id="fsChannel" class="input"></select>
+            </div>
+            <div>
+              <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Sortear produtos de qual catálogo?</label>
+              <select id="fsCatalog" class="input">
+                <option value="">Todos os Catálogos (Aleatório entre todos cadastrados)</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Tempo Mínimo (Minutos)</label>
+                <input id="fsMinMin" type="number" step="0.5" min="0.5" class="input" value="2" />
+              </div>
+              <div>
+                <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Tempo Máximo (Minutos)</label>
+                <input id="fsMaxMin" type="number" step="0.5" min="1" class="input" value="7" />
+              </div>
+            </div>
+            <div class="p-3 rounded-xl space-y-1" style="background: var(--bg3); border: 1px solid var(--border);">
+              <div class="text-xs uppercase tracking-wider" style="color: var(--muted);">Formato padrão da mensagem no Discord:</div>
+              <div class="font-mono text-sm font-bold" style="color: var(--accent2);">+1( NOME DO PRODUTO ) ENTREGUE  @everyone</div>
+            </div>
+            <div class="flex flex-wrap gap-2 pt-2">
+              <button id="btnFsToggle" class="btn-gold flex-1" onclick="toggleFakeSales(true)">
+                <i class="fa-solid fa-power-off mr-1"></i> Ativar Vendas Fake
+              </button>
+              <button class="btn-dark" onclick="saveFakeSalesConfig()">
+                <i class="fa-solid fa-floppy-disk mr-1"></i> Salvar Intervalo/Canal
+              </button>
+              <button class="btn-green" onclick="sendFakeSaleNow()">
+                <i class="fa-solid fa-paper-plane mr-1"></i> Disparar 1 Agora
+              </button>
+            </div>
+          </div>
+
+          <div class="card space-y-4">
+            <h3 class="text-lg font-bold" style="color: var(--accent2);"><i class="fa-solid fa-clock-rotate-left mr-2"></i>Últimas Notificações &amp; Produtos no Sorteio</h3>
+            <div>
+              <div class="text-xs uppercase tracking-wider mb-2" style="color: var(--muted);">Produtos cadastrados disponíveis para sorteio:</div>
+              <div id="fsEligibleList" class="flex flex-wrap gap-2"></div>
+            </div>
+            <div class="pt-2" style="border-top: 1px solid var(--border);">
+              <div class="text-xs uppercase tracking-wider mb-2" style="color: var(--muted);">Histórico recente de envios (Tempo Quebrado):</div>
+              <div id="fsHistoryTable"></div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- View: Orders -->
@@ -745,6 +832,7 @@
           catalogs: 'Catálogos',
           products: 'Produtos',
           photos: 'Fotos dos Produtos',
+          fakesales: 'Vendas Fake',
           orders: 'Pedidos',
           pins: 'Mensagens Fixas',
           bots: 'Bots / Webhooks',
@@ -783,6 +871,7 @@
         state.orders = await api('/api/orders' + q);
         state.targets = await api('/api/targets');
         state.pins = await api('/api/pins');
+        state.fakeSales = await api('/api/fakesales');
         const fetchedChannels = await api('/api/channels');
         state.channels = (Array.isArray(fetchedChannels) && fetchedChannels.length > 0) ? fetchedChannels : FALLBACK_CHANNELS;
       } catch (e) {
@@ -795,6 +884,7 @@
       renderCatalogs();
       renderProducts();
       renderPhotos();
+      renderFakeSales();
       renderOrders();
       renderPins();
       renderBots();
@@ -1065,6 +1155,189 @@
     }
     window.saveProductPhoto = saveProductPhoto;
     window.removeProductPhoto = removeProductPhoto;
+
+    function formatBrokenSec(sec) {
+      const s = Math.max(0, Math.round(Number(sec) || 0));
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      if (m <= 0) return r + 's';
+      return m + 'm ' + (r < 10 ? '0' + r : r) + 's';
+    }
+
+    function updateFakeSalesCountdown() {
+      const fs = state.fakeSales;
+      const el = document.getElementById('fsCountdown');
+      if (!el || !fs) return;
+      if (!fs.enabled) {
+        el.textContent = 'Automação desligada';
+        return;
+      }
+      if (!fs.registeredProductsCount || fs.registeredProductsCount <= 0) {
+        el.textContent = 'Aguardando cadastro de produtos (0 cadastrados)';
+        return;
+      }
+      if (!fs.nextSendAt) {
+        el.textContent = 'Sorteando próximo intervalo quebrado...';
+        return;
+      }
+      const diffSec = Math.max(0, Math.ceil((fs.nextSendAt - Date.now()) / 1000));
+      if (diffSec <= 0) {
+        el.textContent = 'Disparando notificação...';
+        refresh().then(() => renderFakeSales(true)).catch(() => {});
+      } else {
+        el.textContent = 'Próximo disparo em ' + formatBrokenSec(diffSec) + (fs.lastDelaySec ? ' (tempo quebrado sorteado: ' + formatBrokenSec(fs.lastDelaySec) + ')' : '');
+      }
+    }
+    setInterval(updateFakeSalesCountdown, 1000);
+
+    function renderFakeSales(force = false) {
+      const fs = state.fakeSales || { enabled: false, channelId: '', catalogFilter: '', minMinutes: 2, maxMinutes: 7, registeredProductsCount: 0, registeredProducts: [], history: [] };
+      const viewEl = document.getElementById('view-fakesales');
+      const isEditing = !force && viewEl && document.activeElement && viewEl.contains(document.activeElement) && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT');
+
+      const chSel = document.getElementById('fsChannel');
+      const catSel = document.getElementById('fsCatalog');
+      const minEl = document.getElementById('fsMinMin');
+      const maxEl = document.getElementById('fsMaxMin');
+
+      if (!isEditing) {
+        if (chSel) {
+          const chs = (state.channels && state.channels.length) ? state.channels : FALLBACK_CHANNELS;
+          chSel.innerHTML = '<option value="">Selecione um canal...</option>' + chs.map(c => '<option value="' + esc(c.id) + '"' + (fs.channelId === c.id ? ' selected' : '') + '>#' + esc(c.name) + '</option>').join('');
+        }
+        if (catSel) {
+          catSel.innerHTML = '<option value="">Todos os Catálogos (Aleatório entre todos cadastrados)</option>' + state.catalogs.map(c => '<option value="' + esc(c.name) + '"' + (fs.catalogFilter === c.name ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('');
+        }
+        if (minEl && fs.minMinutes !== undefined) minEl.value = fs.minMinutes;
+        if (maxEl && fs.maxMinutes !== undefined) maxEl.value = fs.maxMinutes;
+      }
+
+      const statusBadge = document.getElementById('fsStatusBadge');
+      if (statusBadge) {
+        if (fs.enabled && fs.registeredProductsCount > 0) {
+          statusBadge.innerHTML = '<span class="badge badge-paid"><i class="fa-solid fa-circle-play mr-1"></i>ATIVO — TEMPO QUEBRADO</span>';
+        } else if (fs.enabled && (!fs.registeredProductsCount || fs.registeredProductsCount <= 0)) {
+          statusBadge.innerHTML = '<span class="badge badge-pending"><i class="fa-solid fa-triangle-exclamation mr-1"></i>PAUSADO (SEM PRODUTOS)</span>';
+        } else {
+          statusBadge.innerHTML = '<span class="badge badge-cancelled"><i class="fa-solid fa-circle-stop mr-1"></i>DESATIVADO</span>';
+        }
+      }
+
+      const btnToggle = document.getElementById('btnFsToggle');
+      if (btnToggle) {
+        if (fs.enabled) {
+          btnToggle.className = 'btn-red flex-1';
+          btnToggle.innerHTML = '<i class="fa-solid fa-power-off mr-1"></i> Desativar Vendas Fake';
+          btnToggle.setAttribute('onclick', 'toggleFakeSales(false)');
+        } else {
+          btnToggle.className = 'btn-gold flex-1';
+          btnToggle.innerHTML = '<i class="fa-solid fa-power-off mr-1"></i> Ativar Vendas Fake';
+          btnToggle.setAttribute('onclick', 'toggleFakeSales(true)');
+        }
+      }
+
+      const prodCountEl = document.getElementById('fsProdCount');
+      if (prodCountEl) prodCountEl.textContent = String(fs.registeredProductsCount || 0);
+
+      const totalSentEl = document.getElementById('fsTotalSent');
+      if (totalSentEl) totalSentEl.textContent = String(fs.totalSent || 0);
+
+      const lastSentEl = document.getElementById('fsLastSent');
+      if (lastSentEl) {
+        lastSentEl.textContent = fs.lastSentAt
+          ? ('Último: ' + (fs.lastProduct || '') + ' às ' + new Date(fs.lastSentAt).toLocaleTimeString('pt-BR'))
+          : 'Nenhum envio ainda';
+      }
+
+      const eligEl = document.getElementById('fsEligibleList');
+      if (eligEl) {
+        const list = fs.registeredProducts || [];
+        if (list.length === 0) {
+          eligEl.innerHTML = '<div class="text-xs p-3 rounded-lg w-full" style="background:rgba(239,68,68,0.12); color:#f87171; border:1px solid rgba(239,68,68,0.3);"><i class="fa-solid fa-ban mr-1"></i>Nenhum produto cadastrado! Enquanto não houver produtos cadastrados, nenhuma mensagem será enviada.</div>';
+        } else {
+          eligEl.innerHTML = list.map(p =>
+            '<span class="px-3 py-1 rounded-lg text-xs font-semibold" style="background:var(--bg3); border:1px solid var(--border); color:var(--text);">' +
+              '<span style="color:var(--accent2);">+1( ' + esc(p.name) + ' )</span> <span style="color:var(--muted);">[' + esc(p.catalog) + ']</span>' +
+            '</span>'
+          ).join('');
+        }
+      }
+
+      const histEl = document.getElementById('fsHistoryTable');
+      if (histEl) {
+        const h = fs.history || [];
+        if (h.length === 0) {
+          histEl.innerHTML = '<div class="empty" style="padding:20px;">Nenhuma notificação enviada ainda</div>';
+        } else {
+          histEl.innerHTML =
+            '<table class="table"><thead><tr><th>Mensagem Enviada</th><th>Canal</th><th>Próx. Tempo</th><th>Hora</th></tr></thead><tbody>' +
+            h.map(item => {
+              const ch = (state.channels || FALLBACK_CHANNELS).find(c => c.id === item.channelId);
+              const chName = ch ? ('#' + esc(ch.name)) : esc(item.channelId);
+              return (
+                '<tr>' +
+                  '<td class="font-mono text-xs font-bold" style="color:var(--accent2);">' + esc(item.message) + '</td>' +
+                  '<td class="text-xs">' + chName + '</td>' +
+                  '<td class="text-xs" style="color:var(--green);">' + formatBrokenSec(item.nextDelaySec) + '</td>' +
+                  '<td class="text-xs" style="color:var(--muted);">' + new Date(item.sentAt).toLocaleTimeString('pt-BR') + '</td>' +
+                '</tr>'
+              );
+            }).join('') +
+            '</tbody></table>';
+        }
+      }
+
+      updateFakeSalesCountdown();
+    }
+
+    async function saveFakeSalesConfig(overrideEnabled) {
+      try {
+        const channelId = document.getElementById('fsChannel').value;
+        const catalogFilter = document.getElementById('fsCatalog').value;
+        const minMinutes = parseFloat(document.getElementById('fsMinMin').value) || 2;
+        const maxMinutes = parseFloat(document.getElementById('fsMaxMin').value) || 7;
+        const enabled = overrideEnabled !== undefined ? overrideEnabled : Boolean(state.fakeSales && state.fakeSales.enabled);
+
+        const res = await api('/api/fakesales', {
+          method: 'PUT',
+          body: { channelId, catalogFilter, minMinutes, maxMinutes, enabled },
+        });
+        state.fakeSales = res.fakeSales;
+        renderFakeSales(true);
+        toast(enabled ? 'Vendas Fake ativadas com tempo quebrado!' : 'Configuração de Vendas Fake salva!');
+      } catch (e) {
+        toast(e.message);
+      }
+    }
+
+    async function toggleFakeSales(enable) {
+      await saveFakeSalesConfig(enable);
+    }
+
+    async function sendFakeSaleNow() {
+      try {
+        const channelId = document.getElementById('fsChannel').value;
+        const catalogFilter = document.getElementById('fsCatalog').value;
+        if (!channelId) {
+          toast('Selecione um canal do Discord primeiro!');
+          return;
+        }
+        toast('Enviando notificação de venda fake...');
+        const res = await api('/api/fakesales/send-now', {
+          method: 'POST',
+          body: { channelId, catalogFilter },
+        });
+        state.fakeSales = res.fakeSales;
+        renderFakeSales(true);
+        toast('Enviado: ' + res.message);
+      } catch (e) {
+        toast(e.message);
+      }
+    }
+
+    window.saveFakeSalesConfig = saveFakeSalesConfig;
+    window.toggleFakeSales = toggleFakeSales;
+    window.sendFakeSaleNow = sendFakeSaleNow;
 
     function renderOrders() {
       const filter = document.getElementById('filterStatus').value;

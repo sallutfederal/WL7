@@ -63,6 +63,19 @@ const CLOUD_STATE_MSG_ID = '1570530525112705120';
 function normName(s) {
   return String(s || '').trim().replace(/\s+/g, ' ').toLowerCase();
 }
+const DEFAULT_FAKE_SALES = {
+  enabled: false,
+  channelId: '',
+  catalogFilter: '',
+  minMinutes: 2,
+  maxMinutes: 7,
+  nextSendAt: 0,
+  lastSentAt: 0,
+  lastProduct: '',
+  lastDelaySec: 0,
+  totalSent: 0,
+  history: [],
+};
 const DEFAULT_CONFIG = {
   botName: 'WL7 STORE',
   botAvatar: '',
@@ -74,6 +87,7 @@ const DEFAULT_CONFIG = {
   announces: [],
   targets: [],
   pins: [],
+  fakeSales: { ...DEFAULT_FAKE_SALES },
   privateWebhook: process.env.PRIVATE_WEBHOOK || CLOUD_STATE_WEBHOOK,
 };
 
@@ -119,6 +133,8 @@ function loadConfig() {
       if (!Array.isArray(c.targets)) c.targets = [];
       if (!Array.isArray(c.orders)) c.orders = [];
       if (!Array.isArray(c.announces)) c.announces = [];
+      c.fakeSales = { ...DEFAULT_FAKE_SALES, ...(c.fakeSales || {}) };
+      if (!Array.isArray(c.fakeSales.history)) c.fakeSales.history = [];
       return c;
     }
   } catch (e) { console.error('config load error', e); }
@@ -146,6 +162,7 @@ async function saveCloudState(c) {
       catalogs: c.catalogs,
       pins: c.pins,
       targets: c.targets,
+      fakeSales: c.fakeSales,
       updatedAt: Date.now(),
     };
     const b64 = Buffer.from(JSON.stringify(statePayload), 'utf8').toString('base64');
@@ -185,6 +202,10 @@ async function loadCloudState(force = false) {
       cfg.catalogs = stateData.catalogs;
       if (Array.isArray(stateData.pins)) cfg.pins = stateData.pins;
       if (Array.isArray(stateData.targets)) cfg.targets = stateData.targets;
+      if (stateData.fakeSales) {
+        cfg.fakeSales = { ...DEFAULT_FAKE_SALES, ...stateData.fakeSales };
+        if (!Array.isArray(cfg.fakeSales.history)) cfg.fakeSales.history = [];
+      }
       if (stateData.botName) cfg.botName = stateData.botName;
       if (stateData.currency) cfg.currency = stateData.currency;
       if (stateData.botAvatar !== undefined) cfg.botAvatar = stateData.botAvatar;
@@ -1350,8 +1371,120 @@ function getDateKeyBRT(dateInput) {
   }
 }
 
+function getRegisteredFakeSaleProducts() {
+  const fsCfg = cfg.fakeSales || DEFAULT_FAKE_SALES;
+  const catFilter = fsCfg.catalogFilter ? normName(fsCfg.catalogFilter) : '';
+  const list = [];
+  for (const c of (cfg.catalogs || [])) {
+    if (catFilter && normName(c.name) !== catFilter) continue;
+    for (const p of (c.products || [])) {
+      if (p && p.name && String(p.name).trim()) {
+        list.push({ catalog: c.name, name: String(p.name).trim() });
+      }
+    }
+  }
+  return list;
+}
+
+function computeBrokenDelaySec(minMin, maxMin) {
+  const minS = Math.max(15, Math.round((Number(minMin) || 2) * 60));
+  const maxS = Math.max(minS + 23, Math.round((Number(maxMin) || 7) * 60));
+  let sec = Math.floor(Math.random() * (maxS - minS + 1)) + minS;
+  if (sec % 30 === 0 || sec % 10 === 0) {
+    sec += [3, 7, 11, 13, 17, 19, 23][Math.floor(Math.random() * 7)];
+  }
+  return sec;
+}
+
+let isSendingFakeSale = false;
+async function sendOneFakeSale(overrideChannelId = '') {
+  if (isSendingFakeSale) return { ok: false, reason: 'Envio já em andamento' };
+  isSendingFakeSale = true;
+  try {
+    if (!cfg.fakeSales) cfg.fakeSales = { ...DEFAULT_FAKE_SALES };
+    const fsCfg = cfg.fakeSales;
+    const channelId = overrideChannelId || fsCfg.channelId;
+    if (!channelId) return { ok: false, reason: 'Selecione um canal do Discord primeiro' };
+    const pool = getRegisteredFakeSaleProducts();
+    if (pool.length === 0) {
+      return { ok: false, reason: 'Nenhum produto cadastrado! Cadastre ao menos 1 produto para enviar notificações.' };
+    }
+    let candidates = pool;
+    if (pool.length > 1 && fsCfg.lastProduct) {
+      const diff = pool.filter(x => normName(x.name) !== normName(fsCfg.lastProduct));
+      if (diff.length > 0) candidates = diff;
+    }
+    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+    const msgText = '+1( ' + chosen.name + ' ) ENTREGUE  @everyone';
+    const token = getBotToken();
+
+    if (client.isReady()) {
+      const ch = await client.channels.fetch(channelId);
+      await ch.send({ content: msgText, allowedMentions: { parse: ['everyone'] } });
+    } else if (token) {
+      const rest = new REST({ version: '10' }).setToken(token);
+      await rest.post(Routes.channelMessages(channelId), {
+        body: {
+          content: msgText,
+          allowed_mentions: { parse: ['everyone'] },
+        },
+      });
+    } else {
+      return { ok: false, reason: 'Token do bot não encontrado' };
+    }
+
+    const nextSec = computeBrokenDelaySec(fsCfg.minMinutes, fsCfg.maxMinutes);
+    const now = Date.now();
+    fsCfg.lastSentAt = now;
+    fsCfg.lastProduct = chosen.name;
+    fsCfg.lastDelaySec = nextSec;
+    fsCfg.nextSendAt = fsCfg.enabled ? (now + nextSec * 1000) : 0;
+    fsCfg.totalSent = (Number(fsCfg.totalSent) || 0) + 1;
+    if (!Array.isArray(fsCfg.history)) fsCfg.history = [];
+    fsCfg.history.unshift({
+      product: chosen.name,
+      catalog: chosen.catalog,
+      channelId,
+      message: msgText,
+      sentAt: new Date(now).toISOString(),
+      nextDelaySec: nextSec,
+    });
+    if (fsCfg.history.length > 10) fsCfg.history = fsCfg.history.slice(0, 10);
+    await saveConfig(cfg);
+    return { ok: true, product: chosen.name, catalog: chosen.catalog, message: msgText, nextDelaySec: nextSec, fakeSales: fsCfg };
+  } catch (e) {
+    console.error('sendOneFakeSale err:', e.message);
+    return { ok: false, reason: e.message };
+  } finally {
+    isSendingFakeSale = false;
+  }
+}
+
+async function checkFakeSalesTimer() {
+  try {
+    const fsCfg = cfg.fakeSales;
+    if (!fsCfg || !fsCfg.enabled || !fsCfg.channelId) return;
+    const pool = getRegisteredFakeSaleProducts();
+    if (pool.length === 0) return;
+    const now = Date.now();
+    if (!fsCfg.nextSendAt || fsCfg.nextSendAt <= 0) {
+      const sec = computeBrokenDelaySec(fsCfg.minMinutes, fsCfg.maxMinutes);
+      fsCfg.lastDelaySec = sec;
+      fsCfg.nextSendAt = now + sec * 1000;
+      await saveConfig(cfg);
+      return;
+    }
+    if (now >= fsCfg.nextSendAt) {
+      await sendOneFakeSale();
+    }
+  } catch (e) {
+    console.error('checkFakeSalesTimer err:', e.message);
+  }
+}
+
   app.get('/api/status', async (req, res) => {
     await Promise.all([loadCloudState(), syncOrdersFromPingo()]);
+    checkFakeSalesTimer().catch(() => {});
     const targetDate = req.query.date || getDateKeyBRT();
     const dayOrders = cfg.orders.filter(o => getDateKeyBRT(o.createdAt) === targetDate);
     const paidList = dayOrders.filter(o => o.status === 'paid' || o.status === 'delivered');
@@ -1763,6 +1896,70 @@ function getDateKeyBRT(dateInput) {
     }
     res.json({ ok: true, updated });
   });
+  app.get('/api/fakesales', async (req, res) => {
+    await loadCloudState();
+    await checkFakeSalesTimer();
+    const pool = getRegisteredFakeSaleProducts();
+    res.json({
+      ...(cfg.fakeSales || DEFAULT_FAKE_SALES),
+      registeredProductsCount: pool.length,
+      registeredProducts: pool,
+    });
+  });
+  app.put('/api/fakesales', async (req, res) => {
+    await loadCloudState();
+    if (!cfg.fakeSales) cfg.fakeSales = { ...DEFAULT_FAKE_SALES };
+    const body = req.body || {};
+    if (body.channelId !== undefined) cfg.fakeSales.channelId = String(body.channelId || '').trim();
+    if (body.catalogFilter !== undefined) cfg.fakeSales.catalogFilter = String(body.catalogFilter || '').trim();
+    if (body.minMinutes !== undefined) cfg.fakeSales.minMinutes = Math.max(0.5, Number(body.minMinutes) || 2);
+    if (body.maxMinutes !== undefined) cfg.fakeSales.maxMinutes = Math.max(cfg.fakeSales.minMinutes + 0.5, Number(body.maxMinutes) || 7);
+    if (body.enabled !== undefined) cfg.fakeSales.enabled = Boolean(body.enabled);
+
+    if (cfg.fakeSales.enabled) {
+      if (!cfg.fakeSales.channelId) {
+        cfg.fakeSales.enabled = false;
+        return res.status(400).json({ error: 'Selecione um canal do Discord para ativar as Vendas Fake.' });
+      }
+      const pool = getRegisteredFakeSaleProducts();
+      if (pool.length === 0) {
+        cfg.fakeSales.enabled = false;
+        return res.status(400).json({ error: 'Não há nenhum produto cadastrado! Cadastre produtos antes de ativar.' });
+      }
+      const sec = computeBrokenDelaySec(cfg.fakeSales.minMinutes, cfg.fakeSales.maxMinutes);
+      cfg.fakeSales.lastDelaySec = sec;
+      cfg.fakeSales.nextSendAt = Date.now() + sec * 1000;
+    } else {
+      cfg.fakeSales.nextSendAt = 0;
+    }
+    await saveConfig(cfg);
+    const pool = getRegisteredFakeSaleProducts();
+    res.json({
+      ok: true,
+      fakeSales: {
+        ...cfg.fakeSales,
+        registeredProductsCount: pool.length,
+        registeredProducts: pool,
+      },
+    });
+  });
+  app.post('/api/fakesales/send-now', async (req, res) => {
+    await loadCloudState();
+    if (!cfg.fakeSales) cfg.fakeSales = { ...DEFAULT_FAKE_SALES };
+    if (req.body && req.body.channelId) cfg.fakeSales.channelId = String(req.body.channelId).trim();
+    if (req.body && req.body.catalogFilter !== undefined) cfg.fakeSales.catalogFilter = String(req.body.catalogFilter).trim();
+    const r = await sendOneFakeSale(cfg.fakeSales.channelId);
+    if (!r.ok) return res.status(400).json({ error: r.reason });
+    const pool = getRegisteredFakeSaleProducts();
+    res.json({
+      ...r,
+      fakeSales: {
+        ...cfg.fakeSales,
+        registeredProductsCount: pool.length,
+        registeredProducts: pool,
+      },
+    });
+  });
   app.put('/api/settings', async (req, res) => {
     await loadCloudState();
     const { botName, currency, botAvatar, botBanner } = req.body || {};
@@ -1809,6 +2006,7 @@ function getDateKeyBRT(dateInput) {
     // polling for payment confirmations (via Gateway events AND direct PingoCash API status check)
     setInterval(async () => {
       try { await loadCloudState(); } catch (err) {}
+      try { await checkFakeSalesTimer(); } catch (err) {}
       // 1. Poll gateway /events via GATEWAY_URL binding (or local fallback)
       try {
         const gatewayBase = process.env.GATEWAY_URL || ('http://localhost:' + (process.env.GATEWAY_PORT || 3001));
