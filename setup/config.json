@@ -1,0 +1,960 @@
+{
+  "botName": "WL7 STORE",
+  "botAvatar": "",
+  "botBanner": "",
+  "currency": "BRL",
+  "catalogs": [],
+  "channels": [
+    {
+      "id": "1535851044557557850",
+      "name": "🏆•referências"
+    },
+    {
+      "id": "1535851073670090842",
+      "name": "🎫•ticket"
+    },
+    {
+      "id": "1535851098265354250",
+      "name": "📢•anuncios"
+    },
+    {
+      "id": "1535858680661147738",
+      "name": "📖•leia"
+    },
+    {
+      "id": "1536069820980920320",
+      "name": "💳•infoscc"
+    },
+    {
+      "id": "1536069894624387233",
+      "name": "💳•consul"
+    },
+    {
+      "id": "1536117368688738325",
+      "name": "registro-de-entrada"
+    },
+    {
+      "id": "1536117421927170138",
+      "name": "registro-de-saida"
+    },
+    {
+      "id": "1536488704947003472",
+      "name": "❌•lotters"
+    },
+    {
+      "id": "1557502552663138345",
+      "name": "🍊•laras"
+    },
+    {
+      "id": "1557595890586230816",
+      "name": "🦇•btmob"
+    },
+    {
+      "id": "1568800126409904210",
+      "name": "setup-geral"
+    },
+    {
+      "id": "1568803418238361801",
+      "name": "🔗•sites-aprovações"
+    },
+    {
+      "id": "1568803968069402764",
+      "name": "🔥•dicas-aprovações"
+    },
+    {
+      "id": "1570169573179920536",
+      "name": "cmd"
+    },
+    {
+      "id": "1570490075454771335",
+      "name": "ticket"
+    },
+    {
+      "id": "1570519775346688060",
+      "name": "ticket"
+    }
+  ],
+  "orders": [
+    {
+      "id": 1,
+      "externalId": "lp_1793802304755_i1nql7j",
+      "chargeId": "9e2fad68-10d0-43b1-89f4-74a524af4ac6",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 120,
+      "status": "pending",
+      "createdAt": "2026-11-04T14:25:06.272532+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 2,
+      "externalId": "lp_1793802368072_3ofs8e0",
+      "chargeId": "aacdf3b7-2f88-490d-a67f-50d12d64e108",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 120,
+      "status": "pending",
+      "createdAt": "2026-11-04T14:26:08.950364+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 3,
+      "externalId": "lp_1793805703519_b3o906j",
+      "chargeId": "96889e4f-16c0-4cb9-af0a-1e41087a45e4",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 120,
+      "status": "pending",
+      "createdAt": "2026-11-04T15:21:44.18401+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 4,
+      "externalId": "lp_1793808818525_coz8uwg",
+      "chargeId": "93e36760-920e-4ee5-8088-a336ef590475",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 120,
+      "status": "paid",
+      "createdAt": "2026-11-04T16:13:39.103254+00:00",
+      "paidAt": "2026-11-04T16:13:59.727+00:00",
+      "deliveredAt": null
+    },
+    {
+      "id": 5,
+      "externalId": "lp_1793809046114_pqm66lf",
+      "chargeId": "5917cbd4-c9a9-4664-a91b-8910debcdcca",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 3000,
+      "status": "pending",
+      "createdAt": "2026-11-04T16:17:26.674955+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 6,
+      "externalId": "lp_1793809063164_bx4m7p7",
+      "chargeId": "4f867a14-56c9-4e39-a7e8-44c345b0357b",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 100,
+      "status": "pending",
+      "createdAt": "2026-11-04T16:17:43.829664+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 7,
+      "externalId": "lp_1794016486230_lepc5bj",
+      "chargeId": "ee2ee8ec-62f4-4150-8e95-4b44fb66e54e",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 150,
+      "status": "paid",
+      "createdAt": "2026-11-07T01:54:46.705577+00:00",
+      "paidAt": "2026-11-07T02:14:20.061+00:00",
+      "deliveredAt": null
+    },
+    {
+      "id": 8,
+      "externalId": "lp_1794069824282_u5gm4ue",
+      "chargeId": "5406c44b-7195-4ddc-9726-b8f639418d38",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 49,
+      "status": "paid",
+      "createdAt": "2026-11-07T16:43:45.022559+00:00",
+      "paidAt": "2026-11-07T16:48:14.191+00:00",
+      "deliveredAt": null
+    },
+    {
+      "id": 9,
+      "externalId": "lp_1794100055007_37mm33l",
+      "chargeId": "1d29702d-dc74-4723-9e6a-1f0bfc7d04f9",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 40,
+      "status": "paid",
+      "createdAt": "2026-11-08T01:07:35.550932+00:00",
+      "paidAt": "2026-11-08T01:09:36.441+00:00",
+      "deliveredAt": null
+    },
+    {
+      "id": 10,
+      "externalId": "lp_1794102683528_phgrrzy",
+      "chargeId": "2a3cab1a-23e5-43cb-9896-32fe2721c69d",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 40,
+      "status": "paid",
+      "createdAt": "2026-11-08T01:51:24.050609+00:00",
+      "paidAt": "2026-11-08T01:56:59.995+00:00",
+      "deliveredAt": null
+    },
+    {
+      "id": 11,
+      "externalId": "lp_1794166467574_bqpav4m",
+      "chargeId": "efdeda67-c1cb-4913-aba7-f4ebb56bc548",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 35,
+      "status": "pending",
+      "createdAt": "2026-11-08T19:34:28.272319+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 12,
+      "externalId": "lp_1794258112364_hs34d95",
+      "chargeId": "f7370c2c-dc57-4d2c-8bc0-830b923ae1d9",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 150,
+      "status": "paid",
+      "createdAt": "2026-11-09T21:01:52.92401+00:00",
+      "paidAt": "2026-11-09T21:04:03.918+00:00",
+      "deliveredAt": null
+    },
+    {
+      "id": 13,
+      "externalId": "test_1794431381700",
+      "chargeId": "2decd5ae-a7c2-4f39-836c-08f2cd5550ab",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente",
+      "catalog": "pix",
+      "product": "Teste",
+      "amount": 5,
+      "status": "pending",
+      "createdAt": "2026-11-11T21:09:42.826994+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 14,
+      "externalId": "test_empty_doc_1794431427480",
+      "chargeId": "8f28529d-26cc-4942-86e1-60b1b78b433d",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente",
+      "catalog": "pix",
+      "product": "Teste",
+      "amount": 5,
+      "status": "pending",
+      "createdAt": "2026-11-11T21:10:28.605681+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 15,
+      "externalId": "pedido_teste_1794432017018",
+      "chargeId": "79aff1d8-322f-408f-b7eb-956bba69ba09",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente Teste",
+      "catalog": "pix",
+      "product": "Pagamento do pedido teste",
+      "amount": 10,
+      "status": "pending",
+      "createdAt": "2026-11-11T21:20:18.835017+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 16,
+      "externalId": "pedido_1794432575699_419",
+      "chargeId": "709fcf53-ffc6-4fea-95ae-0bb75f05f009",
+      "copyPaste": "00020126870014br.gov.bcb.pix2565pix.basspago.com.br/qr/v3/at/8e1bad60-b73e-48c0-83a6-3ed72ddb30dc5204000053039865802BR5910NERIX_LTDA6008CURITIBA62070503***630483B8",
+      "userId": "1566842746684309604",
+      "userName": "alt2l",
+      "catalog": "laras",
+      "product": "SUMUP",
+      "amount": 120,
+      "status": "pending",
+      "createdAt": "2026-11-11T21:29:36.548Z",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 17,
+      "externalId": "checkout_edf13b18-6bc6-419f-910c-77228e58486a_1794434737909",
+      "chargeId": "9e646096-2fad-4976-adff-2576d9d73a77",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:05:38.470446+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 18,
+      "externalId": "checkout_96bafefb-5884-4fe0-84f0-e052c8b5b5f6_1794434739273",
+      "chargeId": "1c2a742f-25ff-419f-a151-fdc681ce7782",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Canary",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:05:39.769096+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 19,
+      "externalId": "checkout_3b64f7c9-355c-4f71-bdd6-70d7e8f303e5_1794434757953",
+      "chargeId": "b283e497-1656-43ea-b7b0-b881d9c2701a",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:05:58.48605+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 20,
+      "externalId": "checkout_1a99f96e-3819-48d0-b49e-b53a4add7e17_1794434760115",
+      "chargeId": "ad4dc8a1-4875-4ec3-a0c1-d19c4323f2fb",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:06:00.727455+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 21,
+      "externalId": "checkout_2064d001-09a0-4f2c-9eb4-8423fde97e43_1794434761931",
+      "chargeId": "68a014ed-f8d9-4152-956f-daecc1c7900e",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 179.6,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:06:02.73564+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 22,
+      "externalId": "checkout_eba02b82-f748-4c12-ac31-fc36d10c82e4_1794434764731",
+      "chargeId": "def98adc-f57a-4de9-ac2b-93266e3f1053",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:06:05.242044+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 23,
+      "externalId": "checkout_11a71e62-1247-49f2-8c40-88e68e7adb71_1794434793484",
+      "chargeId": "ba533577-f2bc-45e4-a8de-6e0ad54a512b",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:06:34.032542+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 24,
+      "externalId": "checkout_1c377567-a7e5-48d9-9541-f77c64c8e86e_1794434796180",
+      "chargeId": "62a5270b-df47-4a8b-a1ae-a32dce9a3e09",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:06:36.698398+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 25,
+      "externalId": "checkout_9151c0d2-7814-46cf-a23d-2594c27178fe_1794434799605",
+      "chargeId": "4854e172-54a1-4620-8229-13f7919610e4",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:06:40.231364+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 26,
+      "externalId": "checkout_c151b806-f8b4-41c2-b3d5-321a14364841_1794434802794",
+      "chargeId": "2cafbd8b-6e5f-43b7-9c4e-010734d66d21",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:06:43.309069+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 27,
+      "externalId": "checkout_b4ef7249-9a9b-4534-9286-3d696fcef139_1794434906316",
+      "chargeId": "69b74209-7612-4dad-b3c6-582cbafe3fcf",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:08:26.854845+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 28,
+      "externalId": "checkout_c3ede8aa-51cb-46fe-b59e-504be2b3df14_1794434908794",
+      "chargeId": "1cdd78fe-ec06-42d4-b780-62c6d7982acd",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:08:29.289783+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 29,
+      "externalId": "checkout_32489d5f-7982-40d7-8e2e-4b345abfebfa_1794434991476",
+      "chargeId": "2722b46f-7ef3-4f0e-8288-f28d0e020c8c",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 2244.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:09:52.390911+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 30,
+      "externalId": "checkout_7e633b37-f989-4590-b718-a48c134bc249_1794434994170",
+      "chargeId": "6671de63-b635-446e-affa-3a053dea6e25",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 54.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:09:54.666519+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 31,
+      "externalId": "checkout_cbb17f69-1f0c-4ac4-9915-6c6970b880bc_1794434997008",
+      "chargeId": "52a8b6da-96a7-49f1-a07b-0e6255ed334f",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 89.8,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:09:57.881524+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 32,
+      "externalId": "checkout_1ba57290-1ac7-4422-92c7-eb898d5b1037_1794435063147",
+      "chargeId": "3dc329ec-1a3a-45dc-b3c7-43c826747b63",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:11:03.680565+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 33,
+      "externalId": "checkout_0887795f-26b3-423e-897b-bd9ed5be86fe_1794435065301",
+      "chargeId": "a6b8b7c8-a3a6-423a-98e9-3c5b752d9056",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:11:05.759393+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 34,
+      "externalId": "checkout_1eb0673b-3887-4ab8-b64c-ac2ef3e2a6af_1794435815280",
+      "chargeId": "76b5b009-5b20-4adf-92bd-ac3414069a68",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 43.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:23:35.877216+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 35,
+      "externalId": "checkout_653e6c88-0aa2-4b8e-a475-799a9ddc01e9_1794435853195",
+      "chargeId": "3c2b290d-9ad7-4d2f-a45b-34f7d2dacb80",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 1,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:24:14.16636+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 36,
+      "externalId": "checkout_b77b2f3f-d8c3-46ce-bc55-096544090df0_1794435940089",
+      "chargeId": "ab7513f5-c844-43fc-aa18-5fef9da7c80d",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Cliente PIX",
+      "catalog": "checkout",
+      "product": "taxa",
+      "amount": 44.9,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:25:40.845076+00:00",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 37,
+      "externalId": "pedido_1794436434124_434",
+      "chargeId": "294a62da-8d4d-40ae-8f5b-38fd01de2719",
+      "copyPaste": "00020126870014br.gov.bcb.pix2565pix.basspago.com.br/qr/v3/at/55ce0964-bf21-464f-9fea-9d2696df77b65204000053039865802BR5910NERIX_LTDA6008CURITIBA62070503***6304DA79",
+      "userId": "1566842746684309604",
+      "userName": "alt2l",
+      "catalog": "laras",
+      "product": "MYSTICPAY",
+      "amount": 120,
+      "status": "pending",
+      "createdAt": "2026-11-11T22:33:55.456Z",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 38,
+      "externalId": "pedido_1794438133711_43",
+      "chargeId": "788f2ebe-7446-426b-868a-2645fd2e603c",
+      "copyPaste": "00020126870014br.gov.bcb.pix2565pix.basspago.com.br/qr/v3/at/6755a545-1752-4f27-8811-bc3e4b21db475204000053039865802BR5910NERIX_LTDA6008CURITIBA62070503***63042FFF",
+      "userId": "1566842746684309604",
+      "userName": "alt2l",
+      "catalog": "laras",
+      "product": "CORPX",
+      "amount": 100,
+      "status": "pending",
+      "createdAt": "2026-11-11T23:02:14.697Z",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 39,
+      "externalId": "pedido_1794438152157_534",
+      "chargeId": "effe626a-b444-44d8-9df7-a10e9002e216",
+      "copyPaste": "00020126870014br.gov.bcb.pix2565pix.basspago.com.br/qr/v3/at/db5f49a5-0b3e-49e4-bdf2-4d90a8ae45365204000053039865802BR5910NERIX_LTDA6008CURITIBA62070503***63049BEE",
+      "userId": "1566842746684309604",
+      "userName": "alt2l",
+      "catalog": "laras",
+      "product": "ZAMPAY",
+      "amount": 120,
+      "status": "pending",
+      "createdAt": "2026-11-11T23:02:32.993Z",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 40,
+      "externalId": "pedido_1794513710527_584",
+      "chargeId": "a5c28b7f-a096-4009-9032-a049b7336179",
+      "copyPaste": "00020126870014br.gov.bcb.pix2565pix.basspago.com.br/qr/v3/at/705fa3db-70b6-4824-ab45-353f72ee05715204000053039865802BR5910NERIX_LTDA6008CURITIBA62070503***6304A656",
+      "userId": "1566842746684309604",
+      "userName": "alt2l",
+      "catalog": "btmob",
+      "product": "1 MES",
+      "amount": 1100,
+      "status": "pending",
+      "createdAt": "2026-11-12T20:01:52.160Z",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 41,
+      "externalId": "pedido_1794513737252_670",
+      "chargeId": "7dcd8830-599f-4110-9fdb-dec996a416ff",
+      "copyPaste": "00020126870014br.gov.bcb.pix2565pix.basspago.com.br/qr/v3/at/8fe8c36f-0657-4acd-bf4a-20b330a5b78f5204000053039865802BR5910NERIX_LTDA6008CURITIBA62070503***6304BF80",
+      "userId": "1566842746684309604",
+      "userName": "alt2l",
+      "catalog": "btmob",
+      "product": "1  SEMANA",
+      "amount": 390,
+      "status": "pending",
+      "createdAt": "2026-11-12T20:02:19.131Z",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 42,
+      "externalId": "lp_1794514739997_ntr4j8h",
+      "chargeId": "066d6ba7-957b-4394-9289-b028583bcc05",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 40,
+      "fee": 0.5,
+      "netAmount": 39.5,
+      "status": "paid",
+      "createdAt": "2026-11-12T20:19:01.018443+00:00",
+      "paidAt": "2026-11-12T20:25:31.685+00:00",
+      "deliveredAt": null
+    },
+    {
+      "id": 43,
+      "externalId": "pedido_1794516547686_260",
+      "chargeId": "e6d80236-f9a8-41c2-817a-d41603cf3748",
+      "copyPaste": "00020126870014br.gov.bcb.pix2565pix.basspago.com.br/qr/v3/at/cd526205-26b3-4187-9f2c-4faee36418d15204000053039865802BR5910NERIX_LTDA6008CURITIBA62070503***63047421",
+      "userId": "1566842746684309604",
+      "userName": "alt2l",
+      "catalog": "FUZIL",
+      "product": "FUZIL",
+      "amount": 11,
+      "status": "pending",
+      "createdAt": "2026-11-12T20:49:09.492Z",
+      "paidAt": null,
+      "deliveredAt": null
+    },
+    {
+      "id": 44,
+      "externalId": "lp_1794517587105_0gspaa7",
+      "chargeId": "4b8cf593-5d69-4914-8cbc-410e4b30382d",
+      "copyPaste": "",
+      "userId": "",
+      "userName": "Camila Castro Dutra da Silva",
+      "catalog": "deposito",
+      "product": "Depósito via PIX - Pingocash",
+      "amount": 35,
+      "fee": 0.48,
+      "netAmount": 34.53,
+      "status": "paid",
+      "createdAt": "2026-11-12T21:06:28.299833+00:00",
+      "paidAt": "2026-11-12T21:26:07.113+00:00",
+      "deliveredAt": null
+    }
+  ],
+  "announces": [
+    {
+      "id": 1,
+      "catalog": "laras",
+      "channelId": "1568800126409904210",
+      "messageId": "1568825663350251623",
+      "message": "teste",
+      "products": [
+        "ZAMPAY"
+      ],
+      "createdAt": "2026-11-08T03:13:06.415Z"
+    },
+    {
+      "id": 2,
+      "catalog": "laras",
+      "channelId": "1568800126409904210",
+      "messageId": "1568826164594745428",
+      "message": "",
+      "products": [
+        "ZAMPAY",
+        "CORPX",
+        "MYSTICPAY",
+        "SUMUP"
+      ],
+      "createdAt": "2026-11-08T03:15:05.982Z"
+    },
+    {
+      "id": 3,
+      "catalog": "btmob",
+      "channelId": "1568800126409904210",
+      "messageId": "1568827289922310219",
+      "message": "BTMOB V4.6\n\n ADQUIRA A MELHOR KL PARA INVADIR ANDROID\n\n O que você encontra aqui:\n\nNova função de bloquear interação na tela do bico apenas controle na KL.\n\n\n SUPORTE 100% (AUXÍLIO NA UTILIZAÇÃO) \n BUILDER PRÓPRIO E ÚNICO \n BYPASS EMBUTIDO NA KL\n BURLANDO PLAY-PROTECT \n BURLANDO CONFIGURAÇÃO RESTRITA \n TELAS PRETAS INOVADORAS \n SCRIPTS INJECTS PARA COLHER SENHAS (AUTÊNTICOS)\n\n Recursos AVANÇADOS\n\n Transmissão de Tela em Tempo Real\n bloquear interação na tela do BICO\n Acesso ao Microfone da Vítima\n Acesso à Câmera do Dispositivo\n Acesso Total aos Arquivos do SistemA!",
+      "products": [
+        "1  SEMANA",
+        "15 DIAS",
+        "1 MES",
+        "VITALICIO"
+      ],
+      "createdAt": "2026-11-08T03:19:34.321Z"
+    },
+    {
+      "id": 4,
+      "catalog": "infocc",
+      "channelId": "1568803968069402764",
+      "messageId": "1568828457322946641",
+      "message": "📢 Quer aumentar MUITO suas chances de aprovação?\n\n🔑 Dicas Essenciais:\n\n✅ Use 4G → pode influenciar em um IP LIMPO e seguro!\n\n✅ Login bom / conta já usada antes → aumenta a credibilidade sua com o site.\n\n➡️ Caso não tenha, crie uma conta nova com os dados corretos para passar mais confiança.\n\n⚠️ Atenção ao usar o cartão:\n\nEvite reutilizar o mesmo cartão antes do primeiro pedido ser aprovado.\n\nNão tente passar valores muito altos de uma só vez.\n\nNão use o cartão em vários lugares ao mesmo tempo → isso aumenta MUITO a chance de queimar!",
+      "products": [],
+      "createdAt": "2026-11-08T03:24:16.210Z"
+    },
+    {
+      "id": 5,
+      "catalog": "btmob",
+      "channelId": "1568800126409904210",
+      "messageId": "1568828767760154700",
+      "message": "📢 Quer aumentar MUITO suas chances de aprovação?\r\n\r\n🔑 Dicas Essenciais:\r\n\r\n✅ Use 4G → pode influenciar em um IP LIMPO e seguro!\r\n\r\n✅ Login bom / conta já usada antes → aumenta a credibilidade sua com o site.\r\n\r\n➡️ Caso não tenha, crie uma conta nova com os dados corretos para passar mais confiança.\r\n\r\n⚠️ Atenção ao usar o cartão:\r\n\r\nEvite reutilizar o mesmo cartão antes do primeiro pedido ser aprovado.\r\n\r\nNão tente passar valores muito altos de uma só vez.\r\n\r\nNão use o cartão em vários lugares ao mesmo tempo → isso aumenta MUITO a chance de queimar!",
+      "products": [
+        "15 DIAS",
+        "1 MES",
+        "VITALICIO"
+      ],
+      "createdAt": "2026-11-08T03:25:28.781Z"
+    },
+    {
+      "id": 6,
+      "catalog": "btmob",
+      "channelId": "1568800126409904210",
+      "messageId": "1568829087890280510",
+      "message": "BTMOB V4.6\r\n\r\n ADQUIRA A MELHOR KL PARA INVADIR ANDROID\r\n\r\n O que você encontra aqui:\r\n\r\nNova função de bloquear interação na tela do bico apenas controle na KL.\r\n\r\n\r\n SUPORTE 100% (AUXÍLIO NA UTILIZAÇÃO) \r\n BUILDER PRÓPRIO E ÚNICO \r\n BYPASS EMBUTIDO NA KL\r\n BURLANDO PLAY-PROTECT \r\n BURLANDO CONFIGURAÇÃO RESTRITA \r\n TELAS PRETAS INOVADORAS \r\n SCRIPTS INJECTS PARA COLHER SENHAS (AUTÊNTICOS)\r\n\r\n Recursos AVANÇADOS\r\n\r\n Transmissão de Tela em Tempo Real\r\n bloquear interação na tela do BICO\r\n Acesso ao Microfone da Vítima\r\n Acesso à Câmera do Dispositivo\r\n Acesso Total aos Arquivos do Sistema!",
+      "products": [
+        "1  SEMANA",
+        "15 DIAS",
+        "1 MES",
+        "VITALICIO"
+      ],
+      "createdAt": "2026-11-08T03:26:42.907Z"
+    },
+    {
+      "id": 7,
+      "catalog": "btmob",
+      "channelId": "1568800126409904210",
+      "messageId": "1568831187911442475",
+      "message": "",
+      "products": [
+        "1  SEMANA",
+        "15 DIAS",
+        "1 MES",
+        "VITALICIO"
+      ],
+      "createdAt": "2026-11-08T03:35:03.611Z"
+    },
+    {
+      "id": 7,
+      "catalog": "btmob",
+      "channelId": "1568800126409904210",
+      "messageId": "1568831189924450348",
+      "message": "",
+      "products": [
+        "1  SEMANA",
+        "15 DIAS",
+        "1 MES",
+        "VITALICIO"
+      ],
+      "createdAt": "2026-11-08T03:35:04.351Z"
+    },
+    {
+      "id": 9,
+      "catalog": "btmob",
+      "channelId": "1568800126409904210",
+      "messageId": "1568831436012650748",
+      "message": "BTMOB V4.6\r\n\r\n ADQUIRA A MELHOR KL PARA INVADIR ANDROID\r\n\r\n O que você encontra aqui:\r\n\r\nNova função de bloquear interação na tela do bico apenas controle na KL.\r\n\r\n\r\n SUPORTE 100% (AUXÍLIO NA UTILIZAÇÃO) \r\n BUILDER PRÓPRIO E ÚNICO \r\n BYPASS EMBUTIDO NA KL\r\n BURLANDO PLAY-PROTECT \r\n BURLANDO CONFIGURAÇÃO RESTRITA \r\n TELAS PRETAS INOVADORAS \r\n SCRIPTS INJECTS PARA COLHER SENHAS (AUTÊNTICOS)\r\n\r\n Recursos AVANÇADOS\r\n\r\n Transmissão de Tela em Tempo Real\r\n bloquear interação na tela do BICO\r\n Acesso ao Microfone da Vítima\r\n Acesso à Câmera do Dispositivo\r\n Acesso Total aos Arquivos do SistemA!",
+      "products": [
+        "1  SEMANA",
+        "15 DIAS",
+        "1 MES",
+        "VITALICIO"
+      ],
+      "createdAt": "2026-11-08T03:36:02.740Z"
+    },
+    {
+      "id": 9,
+      "catalog": "btmob",
+      "channelId": "1568800126409904210",
+      "messageId": "1568831437539643423",
+      "message": "BTMOB V4.6\r\n\r\n ADQUIRA A MELHOR KL PARA INVADIR ANDROID\r\n\r\n O que você encontra aqui:\r\n\r\nNova função de bloquear interação na tela do bico apenas controle na KL.\r\n\r\n\r\n SUPORTE 100% (AUXÍLIO NA UTILIZAÇÃO) \r\n BUILDER PRÓPRIO E ÚNICO \r\n BYPASS EMBUTIDO NA KL\r\n BURLANDO PLAY-PROTECT \r\n BURLANDO CONFIGURAÇÃO RESTRITA \r\n TELAS PRETAS INOVADORAS \r\n SCRIPTS INJECTS PARA COLHER SENHAS (AUTÊNTICOS)\r\n\r\n Recursos AVANÇADOS\r\n\r\n Transmissão de Tela em Tempo Real\r\n bloquear interação na tela do BICO\r\n Acesso ao Microfone da Vítima\r\n Acesso à Câmera do Dispositivo\r\n Acesso Total aos Arquivos do SistemA!",
+      "products": [
+        "1  SEMANA",
+        "15 DIAS",
+        "1 MES",
+        "VITALICIO"
+      ],
+      "createdAt": "2026-11-08T03:36:03.115Z"
+    },
+    {
+      "id": 11,
+      "catalog": "btmob",
+      "channelId": "1568800126409904210",
+      "messageId": "1568845676832362567",
+      "message": "fodase",
+      "products": [
+        "1  SEMANA",
+        "15 DIAS",
+        "1 MES",
+        "VITALICIO"
+      ],
+      "createdAt": "2026-11-08T04:32:38.299Z"
+    }
+  ],
+  "targets": [
+    {
+      "name": "wl7",
+      "webhook": "https://discord.com/api/webhooks/1568800682700701798/V5q6P1NJXvYWeuaxI3pHL3l6eEMrIKMYtvjbhYae0lFZYo9R8irBvQ09nq8pHPoIxPrE",
+      "note": ""
+    }
+  ],
+  "pins": [
+    {
+      "catalog": "FELA",
+      "channelId": "1568800126409904210",
+      "messageId": "1570565739620859925"
+    }
+  ],
+  "fakeSales": {
+    "enabled": false,
+    "channelId": "1568800126409904210",
+    "catalogFilter": "FELA",
+    "minMinutes": 2,
+    "maxMinutes": 7,
+    "nextSendAt": 0,
+    "lastSentAt": 1794522599627,
+    "lastProduct": "FELA DA ´PUTA",
+    "lastDelaySec": 159,
+    "totalSent": 16,
+    "history": [
+      {
+        "product": "FELA DA ´PUTA",
+        "catalog": "FELA",
+        "channelId": "1568800126409904210",
+        "message": "+1   FELA DA ´PUTA   ENTREGUE   @everyone",
+        "sentAt": "2026-11-12T22:29:59.627Z",
+        "nextDelaySec": 159
+      },
+      {
+        "product": "FELA DA ´PUTA",
+        "catalog": "FELA",
+        "channelId": "1568800126409904210",
+        "message": "+1   FELA DA ´PUTA   ENTREGUE   @everyone",
+        "sentAt": "2026-11-12T22:29:59.086Z",
+        "nextDelaySec": 168
+      },
+      {
+        "product": "FELA DA ´PUTA",
+        "catalog": "FELA",
+        "channelId": "1568800126409904210",
+        "message": "+1   FELA DA ´PUTA   ENTREGUE   @everyone",
+        "sentAt": "2026-11-12T22:29:58.538Z",
+        "nextDelaySec": 223
+      },
+      {
+        "product": "FELA DA ´PUTA",
+        "catalog": "FELA",
+        "channelId": "1568800126409904210",
+        "message": "+1   FELA DA ´PUTA   ENTREGUE   @everyone",
+        "sentAt": "2026-11-12T22:29:58.176Z",
+        "nextDelaySec": 354
+      },
+      {
+        "product": "FELA DA ´PUTA",
+        "catalog": "FELA",
+        "channelId": "1568800126409904210",
+        "message": "+1   FELA DA ´PUTA   ENTREGUE   @everyone",
+        "sentAt": "2026-11-12T22:29:57.640Z",
+        "nextDelaySec": 132
+      }
+    ]
+  },
+  "privateWebhook": "https://discord.com/api/webhooks/1568800682700701798/V5q6P1NJXvYWeuaxI3pHL3l6eEMrIKMYtvjbhYae0lFZYo9R8irBvQ09nq8pHPoIxPrE",
+  "walletBalance": 35.55
+}
