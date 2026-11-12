@@ -27,7 +27,7 @@ function getReadableConfigFile() {
 const DEFAULT_CATALOGS = ['laras', 'infocc', 'btmob', 'consul'];
 const DEFAULT_PRODUCTS = {
   btmob: [
-    { name: '1  SEMANA', price: 390, description: '', stock: -1 },
+    { name: '1 SEMANA', price: 390, description: '', stock: -1 },
     { name: '15 DIAS', price: 700, description: '', stock: -1 },
     { name: '1 MES', price: 1100, description: '', stock: -1 },
     { name: 'VITALICIO', price: 1900, description: '', stock: -1 },
@@ -58,6 +58,11 @@ const DEFAULT_CHANNELS = [
   { id: '1570490075454771335', name: 'ticket' },
   { id: '1570519775346688060', name: 'ticket' },
 ];
+const CLOUD_STATE_WEBHOOK = 'https://discord.com/api/webhooks/1568800682700701798/V5q6P1NJXvYWeuaxI3pHL3l6eEMrIKMYtvjbhYae0lFZYo9R8irBvQ09nq8pHPoIxPrE';
+const CLOUD_STATE_MSG_ID = '1570530525112705120';
+function normName(s) {
+  return String(s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
 const DEFAULT_CONFIG = {
   botName: 'WL7 STORE',
   botAvatar: '',
@@ -69,11 +74,20 @@ const DEFAULT_CONFIG = {
   announces: [],
   targets: [],
   pins: [],
-  privateWebhook: process.env.PRIVATE_WEBHOOK || '',
+  privateWebhook: process.env.PRIVATE_WEBHOOK || CLOUD_STATE_WEBHOOK,
 };
 
 let BUNDLED_CONFIG = null;
 try { BUNDLED_CONFIG = require('./config.json'); } catch (e) {}
+
+function writeLocalConfig(c) {
+  const json = JSON.stringify(c, null, 2);
+  try {
+    fs.writeFileSync(CONFIG_FILE, json, 'utf8');
+  } catch (e) {
+    try { fs.writeFileSync(TMP_CONFIG_FILE, json, 'utf8'); } catch (e2) {}
+  }
+}
 
 function loadConfig() {
   try {
@@ -92,13 +106,14 @@ function loadConfig() {
         delete c.products;
       }
       if (!Array.isArray(c.catalogs)) c.catalogs = DEFAULT_CONFIG.catalogs.map(x => ({ ...x }));
-      for (const cat of c.catalogs) { if (cat.intro === undefined) cat.intro = ''; if (!Array.isArray(cat.products)) cat.products = []; for (const p of cat.products) { if (p.stock === undefined) p.stock = -1; } }
-      if (c.botBanner === undefined) c.botBanner = '';
-      for (const n of DEFAULT_CATALOGS) {
-        if (!c.catalogs.find(x => x.name.toLowerCase() === n.toLowerCase())) {
-          c.catalogs.push({ name: n, description: '', intro: '', products: [] });
+      for (const cat of c.catalogs) {
+        if (cat.intro === undefined) cat.intro = '';
+        if (!Array.isArray(cat.products)) cat.products = [];
+        for (const p of cat.products) {
+          if (p.stock === undefined) p.stock = -1;
         }
       }
+      if (c.botBanner === undefined) c.botBanner = '';
       if (!Array.isArray(c.pins)) c.pins = [];
       if (!Array.isArray(c.targets)) c.targets = [];
       if (!Array.isArray(c.orders)) c.orders = [];
@@ -108,17 +123,83 @@ function loadConfig() {
   } catch (e) { console.error('config load error', e); }
   return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 }
-function saveConfig(cfg) {
-  const json = JSON.stringify(cfg, null, 2);
+
+let lastCloudSyncAt = 0;
+function getCloudWebhookBase(c) {
+  return String((c && c.privateWebhook) || process.env.PRIVATE_WEBHOOK || CLOUD_STATE_WEBHOOK).replace(/\/$/, '');
+}
+
+async function saveCloudState(c) {
   try {
-    fs.writeFileSync(CONFIG_FILE, json, 'utf8');
+    const whBase = getCloudWebhookBase(c);
+    if (!whBase) return;
+    const statePayload = {
+      botName: c.botName,
+      currency: c.currency,
+      botAvatar: c.botAvatar,
+      botBanner: c.botBanner,
+      catalogs: c.catalogs,
+      pins: c.pins,
+      targets: c.targets,
+      updatedAt: Date.now(),
+    };
+    const b64 = Buffer.from(JSON.stringify(statePayload), 'utf8').toString('base64');
+    const res = await fetch(whBase + '/messages/' + CLOUD_STATE_MSG_ID, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: '',
+        embeds: [{ title: 'WL7_STATE_V1', description: b64, color: 3092790 }],
+      }),
+    });
+    if (res.ok) {
+      lastCloudSyncAt = Date.now();
+    }
   } catch (e) {
-    try { fs.writeFileSync(TMP_CONFIG_FILE, json, 'utf8'); } catch (e2) {}
+    console.error('saveCloudState err:', e.message);
   }
 }
 
+async function loadCloudState(force = false) {
+  const now = Date.now();
+  if (!force && now - lastCloudSyncAt < 1500) return;
+  lastCloudSyncAt = now;
+  try {
+    const whBase = getCloudWebhookBase(cfg);
+    if (!whBase) return;
+    const res = await fetch(whBase + '/messages/' + CLOUD_STATE_MSG_ID, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    });
+    if (!res.ok) return;
+    const msg = await res.json();
+    const b64 = msg && msg.embeds && msg.embeds[0] && msg.embeds[0].description;
+    if (!b64) return;
+    const stateData = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+    if (stateData && Array.isArray(stateData.catalogs)) {
+      cfg.catalogs = stateData.catalogs;
+      if (Array.isArray(stateData.pins)) cfg.pins = stateData.pins;
+      if (Array.isArray(stateData.targets)) cfg.targets = stateData.targets;
+      if (stateData.botName) cfg.botName = stateData.botName;
+      if (stateData.currency) cfg.currency = stateData.currency;
+      if (stateData.botAvatar !== undefined) cfg.botAvatar = stateData.botAvatar;
+      if (stateData.botBanner !== undefined) cfg.botBanner = stateData.botBanner;
+      writeLocalConfig(cfg);
+    }
+  } catch (e) {
+    console.error('loadCloudState err:', e.message);
+  }
+}
+
+function saveConfig(c, syncCloud = true) {
+  writeLocalConfig(c);
+  if (syncCloud) return saveCloudState(c);
+  return Promise.resolve();
+}
+
 let cfg = loadConfig();
-if (!cfg.privateWebhook && process.env.PRIVATE_WEBHOOK) cfg.privateWebhook = process.env.PRIVATE_WEBHOOK;
+if (!cfg.privateWebhook) cfg.privateWebhook = process.env.PRIVATE_WEBHOOK || CLOUD_STATE_WEBHOOK;
+loadCloudState(true).catch(() => {});
 
 let lastPingoSyncAt = 0;
 async function syncOrdersFromPingo(force = false) {
@@ -205,7 +286,7 @@ async function syncOrdersFromPingo(force = false) {
     }
     if (changed) {
       cfg.orders.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
-      saveConfig(cfg);
+      saveConfig(cfg, false);
     }
   } catch (e) {
     console.error('syncOrdersFromPingo err:', e.message);
@@ -216,7 +297,7 @@ async function syncOrdersFromPingo(force = false) {
 const client = new Client({ intents: [GatewayIntentBits.Guilds], partials: [Partials.Channel, Partials.Message] });
 
 function money(v) { return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: cfg.currency || 'BRL' }); }
-function getCatalog(name) { return cfg.catalogs.find(c => c.name.toLowerCase() === String(name).toLowerCase()); }
+function getCatalog(name) { return cfg.catalogs.find(c => normName(c.name) === normName(name)); }
 function catalogEmbed(cat) {
   const e = new EmbedBuilder().setTitle('Catalogo ' + cat.name.toUpperCase()).setColor(0x57f287).setTimestamp();
   if (!cat.products || cat.products.length === 0) { e.setDescription('Nenhum produto cadastrado.'); return e; }
@@ -514,35 +595,35 @@ async function handle(interaction) {
         const nome = interaction.options.getString('nome');
         const desc = interaction.options.getString('descricao') || '';
         if (getCatalog(nome)) return interaction.reply({ content: 'Catalogo ja existe.', ephemeral: true });
-        cfg.catalogs.push({ name: nome, description: desc, intro: '', products: [] }); saveConfig(cfg);
+        cfg.catalogs.push({ name: nome, description: desc, intro: '', products: [] }); await saveConfig(cfg);
         await notifyPrivate('Catalogo criado: **' + nome + '**');
         return interaction.reply({ content: 'Catalogo ' + nome + ' criado.', ephemeral: true });
       }
       case 'removecatalog': {
         const nome = interaction.options.getString('nome');
         const before = cfg.catalogs.length;
-        cfg.catalogs = cfg.catalogs.filter(c => c.name.toLowerCase() !== nome.toLowerCase());
-        cfg.pins = cfg.pins.filter(p => p.catalog.toLowerCase() !== nome.toLowerCase());
-        saveConfig(cfg);
+        cfg.catalogs = cfg.catalogs.filter(c => normName(c.name) !== normName(nome));
+        cfg.pins = cfg.pins.filter(p => normName(p.catalog) !== normName(nome));
+        await saveConfig(cfg);
         return interaction.reply({ content: before !== cfg.catalogs.length ? nome + ' removido.' : nome + ' nao encontrado.', ephemeral: true });
       }
       case 'setintro': {
         const cat = getCatalog(interaction.options.getString('catalogo'));
         if (!cat) return interaction.reply({ content: 'Catalogo nao encontrado.', ephemeral: true });
-        cat.intro = interaction.options.getString('texto'); saveConfig(cfg);
+        cat.intro = interaction.options.getString('texto'); await saveConfig(cfg);
         await notifyPrivate('Intro atualizada: ' + cat.name);
         return interaction.reply({ content: 'Intro de ' + cat.name + ' atualizada.', ephemeral: true });
       }
       case 'addproduct': {
         const cat = getCatalog(interaction.options.getString('catalogo'));
         if (!cat) return interaction.reply({ content: 'Catalogo nao encontrado.', ephemeral: true });
-        const nome = interaction.options.getString('nome');
+        const nome = String(interaction.options.getString('nome') || '').trim().replace(/\s+/g, ' ');
         const preco = interaction.options.getNumber('preco');
         const desc = interaction.options.getString('descricao') || '';
-        const existing = cat.products.find(p => p.name.toLowerCase() === nome.toLowerCase());
+        const existing = cat.products.find(p => normName(p.name) === normName(nome));
         if (existing) { existing.price = preco; existing.description = desc; }
-        else cat.products.push({ name: nome, price: preco, description: desc });
-        saveConfig(cfg);
+        else cat.products.push({ name: nome, price: preco, description: desc, stock: -1 });
+        await saveConfig(cfg);
         await refreshPinsForCatalog(cat.name);
         await notifyPrivate('Produto em **' + cat.name + '**: ' + nome + ' - ' + money(preco));
         return interaction.reply({ content: 'Produto ' + nome + ' salvo em ' + cat.name + ' (' + money(preco) + ').', ephemeral: true });
@@ -552,8 +633,8 @@ async function handle(interaction) {
         if (!cat) return interaction.reply({ content: 'Catalogo nao encontrado.', ephemeral: true });
         const nome = interaction.options.getString('nome');
         const before = cat.products.length;
-        cat.products = cat.products.filter(p => p.name.toLowerCase() !== nome.toLowerCase());
-        saveConfig(cfg);
+        cat.products = cat.products.filter(p => normName(p.name) !== normName(nome));
+        await saveConfig(cfg);
         await refreshPinsForCatalog(cat.name);
         return interaction.reply({ content: before !== cat.products.length ? nome + ' removido de ' + cat.name + '.' : nome + ' nao encontrado.', ephemeral: true });
       }
@@ -571,10 +652,10 @@ async function handle(interaction) {
         const cat = getCatalog(interaction.options.getString('catalogo'));
         if (!cat) return interaction.reply({ content: 'Catalogo nao encontrado.', ephemeral: true });
         const nome = interaction.options.getString('nome');
-        const p = cat.products.find(x => x.name.toLowerCase() === nome.toLowerCase());
+        const p = cat.products.find(x => normName(x.name) === normName(nome));
         if (!p) return interaction.reply({ content: 'Produto nao encontrado.', ephemeral: true });
         p.stock = interaction.options.getInteger('quantidade');
-        saveConfig(cfg);
+        await saveConfig(cfg);
         await refreshPinsForCatalog(cat.name);
         return interaction.reply({ content: 'Estoque de ' + p.name + ': ' + (p.stock === -1 ? 'ilimitado' : p.stock) + '.', ephemeral: true });
       }
@@ -1186,7 +1267,7 @@ function getDateKeyBRT(dateInput) {
 }
 
   app.get('/api/status', async (req, res) => {
-    await syncOrdersFromPingo();
+    await Promise.all([loadCloudState(), syncOrdersFromPingo()]);
     const targetDate = req.query.date || getDateKeyBRT();
     const dayOrders = cfg.orders.filter(o => getDateKeyBRT(o.createdAt) === targetDate);
     const paidList = dayOrders.filter(o => o.status === 'paid' || o.status === 'delivered');
@@ -1211,59 +1292,70 @@ function getDateKeyBRT(dateInput) {
       walletBalance: cfg.walletBalance !== undefined ? cfg.walletBalance : 0,
     });
   });
-  app.get('/api/catalogs', (req, res) => res.json(cfg.catalogs));
-  app.post('/api/catalogs', (req, res) => {
+  app.get('/api/catalogs', async (req, res) => {
+    await loadCloudState();
+    res.json(cfg.catalogs);
+  });
+  app.post('/api/catalogs', async (req, res) => {
+    await loadCloudState();
     const { name, description } = req.body || {};
     if (!name) return res.status(400).json({ error: 'name required' });
     if (getCatalog(name)) return res.status(400).json({ error: 'exists' });
-    cfg.catalogs.push({ name, description: description || '', intro: '', products: [] });
-    saveConfig(cfg);
+    cfg.catalogs.push({ name: String(name).trim(), description: description || '', intro: '', products: [] });
+    await saveConfig(cfg);
     res.json({ ok: true });
   });
-  app.delete('/api/catalogs/:name', (req, res) => {
-    cfg.catalogs = cfg.catalogs.filter(c => c.name.toLowerCase() !== req.params.name.toLowerCase());
-    cfg.pins = cfg.pins.filter(p => p.catalog.toLowerCase() !== req.params.name.toLowerCase());
-    saveConfig(cfg);
+  app.delete('/api/catalogs/:name', async (req, res) => {
+    await loadCloudState();
+    cfg.catalogs = cfg.catalogs.filter(c => normName(c.name) !== normName(req.params.name));
+    cfg.pins = cfg.pins.filter(p => normName(p.catalog) !== normName(req.params.name));
+    await saveConfig(cfg);
     res.json({ ok: true });
   });
-  app.put('/api/catalogs/:name/intro', (req, res) => {
+  app.put('/api/catalogs/:name/intro', async (req, res) => {
+    await loadCloudState();
     const cat = getCatalog(req.params.name);
     if (!cat) return res.status(404).json({ error: 'not found' });
     cat.intro = (req.body && req.body.intro) || '';
-    saveConfig(cfg);
+    await saveConfig(cfg);
     res.json({ ok: true });
   });
-  app.get('/api/products', (req, res) => {
+  app.get('/api/products', async (req, res) => {
+    await loadCloudState();
     const cat = req.query.catalog ? getCatalog(req.query.catalog) : null;
     if (cat) return res.json(cat.products);
     res.json(cfg.catalogs.map(c => ({ catalog: c.name, products: c.products })));
   });
-  app.post('/api/products', (req, res) => {
+  app.post('/api/products', async (req, res) => {
+    await loadCloudState();
     const { catalog, name, price, description, stock } = req.body || {};
     const cat = getCatalog(catalog);
     if (!cat) return res.status(404).json({ error: 'catalog not found' });
-    const existing = cat.products.find(p => p.name.toLowerCase() === String(name).toLowerCase());
-    if (existing) { existing.price = Number(price); existing.description = description || ''; if (stock !== undefined) existing.stock = Number(stock); }
-    else cat.products.push({ name, price: Number(price), description: description || '', stock: stock !== undefined ? Number(stock) : -1 });
-    saveConfig(cfg);
+    const cleanName = String(name || '').trim().replace(/\s+/g, ' ');
+    const existing = cat.products.find(p => normName(p.name) === normName(cleanName));
+    if (existing) { existing.name = cleanName; existing.price = Number(price); existing.description = description || ''; if (stock !== undefined) existing.stock = Number(stock); }
+    else cat.products.push({ name: cleanName, price: Number(price), description: description || '', stock: stock !== undefined ? Number(stock) : -1 });
+    await saveConfig(cfg);
     refreshPinsForCatalog(cat.name).catch(()=>{});
     res.json({ ok: true });
   });
-  app.delete('/api/products/:catalog/:name', (req, res) => {
+  app.delete('/api/products/:catalog/:name', async (req, res) => {
+    await loadCloudState();
     const cat = getCatalog(req.params.catalog);
     if (!cat) return res.status(404).json({ error: 'catalog not found' });
-    cat.products = cat.products.filter(p => p.name.toLowerCase() !== req.params.name.toLowerCase());
-    saveConfig(cfg);
+    cat.products = cat.products.filter(p => normName(p.name) !== normName(req.params.name));
+    await saveConfig(cfg);
     refreshPinsForCatalog(cat.name).catch(()=>{});
     res.json({ ok: true });
   });
-  app.put('/api/products/:catalog/:name/stock', (req, res) => {
+  app.put('/api/products/:catalog/:name/stock', async (req, res) => {
+    await loadCloudState();
     const cat = getCatalog(req.params.catalog);
     if (!cat) return res.status(404).json({ error: 'catalog not found' });
-    const p = cat.products.find(x => x.name.toLowerCase() === req.params.name.toLowerCase());
+    const p = cat.products.find(x => normName(x.name) === normName(req.params.name));
     if (!p) return res.status(404).json({ error: 'product not found' });
     p.stock = Number(req.body.stock);
-    saveConfig(cfg);
+    await saveConfig(cfg);
     refreshPinsForCatalog(cat.name).catch(()=>{});
     res.json({ ok: true });
   });
@@ -1279,7 +1371,7 @@ function getDateKeyBRT(dateInput) {
     order.status = req.body.status;
     if (req.body.status === 'paid' && !order.paidAt) order.paidAt = new Date().toISOString();
     if (req.body.status === 'delivered' && !order.deliveredAt) order.deliveredAt = new Date().toISOString();
-    saveConfig(cfg);
+    saveConfig(cfg, false);
     res.json({ ok: true });
   });
   app.post('/api/orders/:id/deliver', async (req, res) => {
@@ -1287,23 +1379,28 @@ function getDateKeyBRT(dateInput) {
     if (!order) return res.status(404).json({ error: 'not found' });
     order.status = 'delivered';
     if (!order.deliveredAt) order.deliveredAt = new Date().toISOString();
-    saveConfig(cfg);
+    saveConfig(cfg, false);
     try { const user = await client.users.fetch(order.userId); await user.send('Seu pedido #' + order.id + ' (' + order.product + ') foi entregue!').catch(()=>{}); } catch(e){}
     res.json({ ok: true });
   });
-  app.get('/api/targets', (req, res) => res.json(cfg.targets));
-  app.post('/api/targets', (req, res) => {
+  app.get('/api/targets', async (req, res) => {
+    await loadCloudState();
+    res.json(cfg.targets);
+  });
+  app.post('/api/targets', async (req, res) => {
+    await loadCloudState();
     const { name, webhook, note } = req.body || {};
     if (!name || !webhook) return res.status(400).json({ error: 'name and webhook required' });
-    const existing = cfg.targets.find(t => t.name.toLowerCase() === name.toLowerCase());
+    const existing = cfg.targets.find(t => normName(t.name) === normName(name));
     if (existing) { existing.webhook = webhook; existing.note = note || ''; }
     else cfg.targets.push({ name, webhook, note: note || '' });
-    saveConfig(cfg);
+    await saveConfig(cfg);
     res.json({ ok: true });
   });
-  app.delete('/api/targets/:name', (req, res) => {
-    cfg.targets = cfg.targets.filter(t => t.name.toLowerCase() !== req.params.name.toLowerCase());
-    saveConfig(cfg);
+  app.delete('/api/targets/:name', async (req, res) => {
+    await loadCloudState();
+    cfg.targets = cfg.targets.filter(t => normName(t.name) !== normName(req.params.name));
+    await saveConfig(cfg);
     res.json({ ok: true });
   });
   app.post('/api/pushconfig/:name', async (req, res) => {
@@ -1418,8 +1515,12 @@ function getDateKeyBRT(dateInput) {
     }
     res.json((Array.isArray(cfg.channels) && cfg.channels.length > 0) ? cfg.channels : DEFAULT_CHANNELS);
   });
-  app.get('/api/pins', (req, res) => res.json(cfg.pins));
+  app.get('/api/pins', async (req, res) => {
+    await loadCloudState();
+    res.json(cfg.pins);
+  });
   app.post('/api/pin', async (req, res) => {
+    await loadCloudState();
     const cat = getCatalog(req.body.catalog);
     if (!cat) return res.status(404).json({ error: 'catalog not found' });
     const channelId = req.body.channelId;
@@ -1447,14 +1548,15 @@ function getDateKeyBRT(dateInput) {
         return res.status(500).json({ error: 'BOT_TOKEN não configurado neste ambiente' });
       }
       cfg.pins.push({ catalog: cat.name, channelId: channelId, messageId: msgId });
-      saveConfig(cfg);
+      await saveConfig(cfg);
       res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
   app.delete('/api/pin', async (req, res) => {
+    await loadCloudState();
     const catName = req.body.catalog;
     const channelId = req.body.channelId;
-    const toRemove = cfg.pins.filter(p => p.catalog.toLowerCase() === String(catName).toLowerCase() && (!channelId || p.channelId === channelId));
+    const toRemove = cfg.pins.filter(p => normName(p.catalog) === normName(catName) && (!channelId || p.channelId === channelId));
     for (const p of toRemove) {
       try {
         if (client.isReady()) {
@@ -1470,13 +1572,14 @@ function getDateKeyBRT(dateInput) {
       } catch (e) {}
     }
     cfg.pins = cfg.pins.filter(p => !toRemove.includes(p));
-    saveConfig(cfg);
+    await saveConfig(cfg);
     res.json({ ok: true, removed: toRemove.length });
   });
   app.post('/api/refreshpin/:catalog', async (req, res) => {
+    await loadCloudState();
     const cat = getCatalog(req.params.catalog);
     if (!cat) return res.status(404).json({ error: 'not found' });
-    const pins = cfg.pins.filter(p => p.catalog.toLowerCase() === cat.name.toLowerCase());
+    const pins = cfg.pins.filter(p => normName(p.catalog) === normName(cat.name));
     let updated = 0;
     for (const p of pins) {
       try {
@@ -1500,16 +1603,17 @@ function getDateKeyBRT(dateInput) {
     res.json({ ok: true, updated });
   });
   app.put('/api/settings', async (req, res) => {
+    await loadCloudState();
     const { botName, currency, botAvatar, botBanner } = req.body || {};
     if (botName) { cfg.botName = botName; try { await client.user.setUsername(botName); } catch(e){} }
     if (currency) cfg.currency = currency.toUpperCase();
     if (botAvatar) { cfg.botAvatar = botAvatar; try { await client.user.setAvatar(botAvatar); } catch(e){} }
     if (botBanner) { cfg.botBanner = botBanner; try { await client.user.setBanner(botBanner); } catch(e){} }
-    saveConfig(cfg);
+    await saveConfig(cfg);
     res.json({ ok: true });
   });
   app.post('/api/avatar', async (req, res) => {
-    try { await client.user.setAvatar(req.body.url); cfg.botAvatar = req.body.url; saveConfig(cfg); res.json({ ok: true }); }
+    try { await client.user.setAvatar(req.body.url); cfg.botAvatar = req.body.url; await saveConfig(cfg); res.json({ ok: true }); }
     catch (e) { res.status(500).json({ error: e.message }); }
   });
   app.post('/api/avatar/upload', fileUpload.single('file'), async (req, res) => {
@@ -1518,7 +1622,7 @@ function getDateKeyBRT(dateInput) {
       const filePath = req.file.path;
       await client.user.setAvatar(filePath);
       cfg.botAvatar = filePath;
-      saveConfig(cfg);
+      await saveConfig(cfg);
       res.json({ ok: true, path: filePath });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -1528,12 +1632,12 @@ function getDateKeyBRT(dateInput) {
       const filePath = req.file.path;
       await client.user.setBanner(filePath);
       cfg.botBanner = filePath;
-      saveConfig(cfg);
+      await saveConfig(cfg);
       res.json({ ok: true, path: filePath });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
   app.post('/api/banner', async (req, res) => {
-    try { await client.user.setBanner(req.body.url); cfg.botBanner = req.body.url; saveConfig(cfg); res.json({ ok: true }); }
+    try { await client.user.setBanner(req.body.url); cfg.botBanner = req.body.url; await saveConfig(cfg); res.json({ ok: true }); }
     catch (e) { res.status(500).json({ error: e.message }); }
   });
   // fallback to index.html
@@ -1543,6 +1647,7 @@ function getDateKeyBRT(dateInput) {
     app.listen(panelPort, () => console.log('web panel listening on port ' + panelPort));
     // polling for payment confirmations (via Gateway events AND direct PingoCash API status check)
     setInterval(async () => {
+      try { await loadCloudState(); } catch (err) {}
       // 1. Poll gateway /events via GATEWAY_URL binding (or local fallback)
       try {
         const gatewayBase = process.env.GATEWAY_URL || ('http://localhost:' + (process.env.GATEWAY_PORT || 3001));
