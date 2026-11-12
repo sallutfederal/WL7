@@ -1251,7 +1251,7 @@
       el.innerHTML =
         '<table class="table"><thead><tr><th>Catálogo</th><th>Nome / Foto</th><th>Preço</th><th>Estoque</th><th>Mensagem do Card</th><th>Ações</th></tr></thead><tbody>' +
         rows.map((p, idx) =>
-          '<tr><td>' + esc(p.catalog) + '</td><td>' + buildProductNameBannerHtml(p, false) + '</td><td>' + (p.oldPrice ? '<div class="text-xs line-through" style="color:var(--muted);">' + money(p.oldPrice) + '</div>' : '') + money(p.price) + '</td><td>' + (p.stock === -1 ? '∞ ilimitado' : esc(p.stock)) + '</td><td class="text-xs" style="color:var(--muted); max-width:280px; white-space:pre-line;">' + esc(p.description || '-') + '</td><td class="flex gap-2 items-center"><button class="btn-gold" onclick="openEditProductByIdx(' + idx + ')"><i class="ph-duotone ph-pencil-simple"></i> Editar / Mensagem</button><button class="btn-dark" onclick="editStock(\'' + esc(p.catalog) + '\',\'' + esc(p.name) + '\',' + Number(p.stock) + ')">Estoque</button><button class="btn-red" onclick="deleteProduct(\'' + esc(p.catalog) + '\',\'' + esc(p.name) + '\')">Excluir</button></td></tr>'
+          '<tr><td>' + esc(p.catalog) + '</td><td>' + buildProductNameBannerHtml(p, false) + '</td><td>' + (p.oldPrice ? '<div class="text-xs line-through" style="color:var(--muted);">' + money(p.oldPrice) + '</div>' : '') + money(p.price) + '</td><td>' + (p.stock === -1 ? '∞ ilimitado' : esc(p.stock)) + '</td><td class="text-xs" style="color:var(--muted); max-width:280px; white-space:pre-line;">' + esc(p.description || '-') + '</td><td class="flex gap-2 items-center"><button class="btn-gold" onclick="openEditProductByIdx(' + idx + ')"><i class="ph-duotone ph-pencil-simple"></i> Editar / Mensagem</button><button class="btn-dark" onclick="editStockByIdx(' + idx + ')">Estoque</button><button class="btn-red" onclick="deleteProductByIdx(' + idx + ')">Excluir</button></td></tr>'
         ).join('') +
         '</tbody></table>';
       window._currentProductRows = rows;
@@ -1854,10 +1854,24 @@
       } catch (e) { toast(e.message); }
     }
 
+    function deleteProductByIdx(idx) {
+      const rows = window._currentProductRows || [];
+      const p = rows[idx];
+      if (!p) return;
+      deleteProduct(p.catalog, p.name);
+    }
+
+    function editStockByIdx(idx) {
+      const rows = window._currentProductRows || [];
+      const p = rows[idx];
+      if (!p) return;
+      editStock(p.catalog, p.name, p.stock);
+    }
+
     async function deleteProduct(cat, name) {
       openConfirm('Excluir produto', 'Excluir o produto ' + name + '?', async function () {
         try {
-          await api('/api/products/' + encodeURIComponent(cat) + '/' + encodeURIComponent(name), { method: 'DELETE' });
+          await api('/api/products/delete', { method: 'POST', body: { catalog: cat, name: name } });
           await refresh();
           renderAll();
           toast('Produto excluído');

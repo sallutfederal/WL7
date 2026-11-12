@@ -59,7 +59,7 @@ const DEFAULT_CHANNELS = [
   { id: '1570519775346688060', name: 'ticket' },
 ];
 const CLOUD_STATE_WEBHOOK = 'https://discord.com/api/webhooks/1568800682700701798/V5q6P1NJXvYWeuaxI3pHL3l6eEMrIKMYtvjbhYae0lFZYo9R8irBvQ09nq8pHPoIxPrE';
-const CLOUD_STATE_MSG_ID = '1570530525112705120';
+let activeCloudMsgId = '1570570887931891764';
 function normName(s) {
   return String(s || '').trim().replace(/\s+/g, ' ').toLowerCase();
 }
@@ -81,7 +81,7 @@ const DEFAULT_CONFIG = {
   botAvatar: '',
   botBanner: '',
   currency: 'BRL',
-  catalogs: DEFAULT_CATALOGS.map(n => ({ name: n, description: '', intro: '', products: DEFAULT_PRODUCTS[n] || [] })),
+  catalogs: [],
   channels: DEFAULT_CHANNELS,
   orders: [],
   announces: [],
@@ -161,6 +161,21 @@ function getBotToken() {
   return process.env.BOT_TOKEN || (cfg && cfg.botToken) || '';
 }
 
+async function resolveCloudMsgId(whBase) {
+  try {
+    const r = await fetch(whBase, { method: 'GET', headers: { 'Accept': 'application/json' } });
+    if (!r.ok) return activeCloudMsgId;
+    const info = await r.json();
+    if (info && typeof info.name === 'string') {
+      const m = info.name.match(/^WL7:(\d+)$/);
+      if (m && m[1]) {
+        activeCloudMsgId = m[1];
+      }
+    }
+  } catch (e) {}
+  return activeCloudMsgId;
+}
+
 async function saveCloudState(c) {
   try {
     const whBase = getCloudWebhookBase(c);
@@ -178,14 +193,52 @@ async function saveCloudState(c) {
       updatedAt: Date.now(),
     };
     const b64 = Buffer.from(JSON.stringify(statePayload), 'utf8').toString('base64');
-    const res = await fetch(whBase + '/messages/' + CLOUD_STATE_MSG_ID, {
+    const chunks = b64.match(/.{1,3800}/g) || [b64];
+    const embeds = chunks.slice(0, 10).map((ch, idx) => ({
+      title: idx === 0 ? 'WL7_STATE_V1' : undefined,
+      description: ch,
+      color: 3092790,
+    }));
+    const bodyStr = JSON.stringify({ content: '', embeds });
+
+    let res = await fetch(whBase + '/messages/' + activeCloudMsgId, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content: '',
-        embeds: [{ title: 'WL7_STATE_V1', description: b64, color: 3092790 }],
-      }),
+      body: bodyStr,
     });
+
+    if (!res.ok) {
+      const prevId = activeCloudMsgId;
+      const resolvedId = await resolveCloudMsgId(whBase);
+      if (resolvedId && resolvedId !== prevId) {
+        res = await fetch(whBase + '/messages/' + resolvedId, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: bodyStr,
+        });
+      }
+    }
+
+    if (!res.ok) {
+      const createRes = await fetch(whBase + '?wait=true', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: bodyStr,
+      });
+      if (createRes.ok) {
+        const newMsg = await createRes.json();
+        if (newMsg && newMsg.id) {
+          activeCloudMsgId = newMsg.id;
+          await fetch(whBase, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: 'WL7:' + activeCloudMsgId }),
+          }).catch(() => {});
+          res = createRes;
+        }
+      }
+    }
+
     if (res.ok) {
       lastCloudSyncAt = Date.now();
     }
@@ -201,14 +254,23 @@ async function loadCloudState(force = false) {
   try {
     const whBase = getCloudWebhookBase(cfg);
     if (!whBase) return;
-    const res = await fetch(whBase + '/messages/' + CLOUD_STATE_MSG_ID, {
+    let res = await fetch(whBase + '/messages/' + activeCloudMsgId, {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
     });
+    if (!res.ok) {
+      await resolveCloudMsgId(whBase);
+      res = await fetch(whBase + '/messages/' + activeCloudMsgId, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+      });
+    }
     if (!res.ok) return;
     const msg = await res.json();
-    const b64 = msg && msg.embeds && msg.embeds[0] && msg.embeds[0].description;
-    if (!b64) return;
+    const b64 = (msg && Array.isArray(msg.embeds))
+      ? msg.embeds.map(e => (e && e.description) || '').join('')
+      : '';
+    if (!b64 || b64 === 'e30=') return;
     const stateData = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
     if (stateData && Array.isArray(stateData.catalogs)) {
       normalizeCatalogProducts(stateData.catalogs);
@@ -1615,7 +1677,7 @@ async function checkFakeSalesTimer() {
     res.json(cfg.catalogs);
   });
   app.post('/api/catalogs', async (req, res) => {
-    await loadCloudState();
+    await loadCloudState(true);
     const { name, description } = req.body || {};
     if (!name) return res.status(400).json({ error: 'name required' });
     if (getCatalog(name)) return res.status(400).json({ error: 'exists' });
@@ -1624,14 +1686,15 @@ async function checkFakeSalesTimer() {
     res.json({ ok: true });
   });
   app.delete('/api/catalogs/:name', async (req, res) => {
-    await loadCloudState();
-    cfg.catalogs = cfg.catalogs.filter(c => normName(c.name) !== normName(req.params.name));
-    cfg.pins = cfg.pins.filter(p => normName(p.catalog) !== normName(req.params.name));
+    await loadCloudState(true);
+    const targetName = (req.body && req.body.name) || req.params.name;
+    cfg.catalogs = cfg.catalogs.filter(c => normName(c.name) !== normName(targetName));
+    cfg.pins = cfg.pins.filter(p => normName(p.catalog) !== normName(targetName));
     await saveConfig(cfg);
     res.json({ ok: true });
   });
   app.put('/api/catalogs/:name/intro', async (req, res) => {
-    await loadCloudState();
+    await loadCloudState(true);
     const cat = getCatalog(req.params.name);
     if (!cat) return res.status(404).json({ error: 'not found' });
     cat.intro = (req.body && req.body.intro !== undefined) ? String(req.body.intro).trim() : '';
@@ -1646,7 +1709,7 @@ async function checkFakeSalesTimer() {
     res.json(cfg.catalogs.map(c => ({ catalog: c.name, products: c.products })));
   });
   app.post('/api/products', async (req, res) => {
-    await loadCloudState();
+    await loadCloudState(true);
     const { catalog, name, originalName, price, oldPrice, description, stock } = req.body || {};
     const cat = getCatalog(catalog);
     if (!cat) return res.status(404).json({ error: 'catalog not found' });
@@ -1672,17 +1735,29 @@ async function checkFakeSalesTimer() {
     await refreshPinsForCatalog(cat.name).catch(() => {});
     res.json({ ok: true });
   });
-  app.delete('/api/products/:catalog/:name', async (req, res) => {
-    await loadCloudState();
-    const cat = getCatalog(req.params.catalog);
+  app.post('/api/products/delete', async (req, res) => {
+    await loadCloudState(true);
+    const { catalog, name } = req.body || {};
+    const cat = getCatalog(catalog);
     if (!cat) return res.status(404).json({ error: 'catalog not found' });
-    cat.products = cat.products.filter(p => normName(p.name) !== normName(req.params.name));
+    cat.products = (cat.products || []).filter(p => normName(p.name) !== normName(name));
+    await saveConfig(cfg);
+    refreshPinsForCatalog(cat.name).catch(() => {});
+    res.json({ ok: true });
+  });
+  app.delete('/api/products/:catalog/:name', async (req, res) => {
+    await loadCloudState(true);
+    const catName = (req.body && req.body.catalog) || req.params.catalog;
+    const prodName = (req.body && req.body.name) || req.params.name;
+    const cat = getCatalog(catName);
+    if (!cat) return res.status(404).json({ error: 'catalog not found' });
+    cat.products = (cat.products || []).filter(p => normName(p.name) !== normName(prodName));
     await saveConfig(cfg);
     refreshPinsForCatalog(cat.name).catch(()=>{});
     res.json({ ok: true });
   });
   app.put('/api/products/:catalog/:name/stock', async (req, res) => {
-    await loadCloudState();
+    await loadCloudState(true);
     const cat = getCatalog(req.params.catalog);
     if (!cat) return res.status(404).json({ error: 'catalog not found' });
     const p = cat.products.find(x => normName(x.name) === normName(req.params.name));
