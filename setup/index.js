@@ -1417,12 +1417,16 @@ function computeBrokenDelaySec(minMin, maxMin) {
 }
 
 let isSendingFakeSale = false;
-async function sendOneFakeSale(overrideChannelId = '') {
+async function sendOneFakeSale(overrideChannelId = '', isManual = false) {
   if (isSendingFakeSale) return { ok: false, reason: 'Envio já em andamento' };
   isSendingFakeSale = true;
   try {
     if (!cfg.fakeSales) cfg.fakeSales = { ...DEFAULT_FAKE_SALES };
     const fsCfg = cfg.fakeSales;
+    const now = Date.now();
+    if (!isManual && fsCfg.lastSentAt && (now - Number(fsCfg.lastSentAt)) < 25000) {
+      return { ok: false, reason: 'Intervalo mínimo ativo' };
+    }
     const channelId = overrideChannelId || fsCfg.channelId;
     if (!channelId) return { ok: false, reason: 'Selecione um canal do Discord primeiro' };
     const pool = getRegisteredFakeSaleProducts();
@@ -1435,26 +1439,15 @@ async function sendOneFakeSale(overrideChannelId = '') {
       if (diff.length > 0) candidates = diff;
     }
     const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-    const msgText = '+1 ' + chosen.name + ' ENTREGUE  @everyone';
+    const msgText = '+1   ' + chosen.name + '   ENTREGUE   @everyone';
+    const discordContent = msgText + '\n\u200b';
     const token = getBotToken();
-
-    if (client.isReady()) {
-      const ch = await client.channels.fetch(channelId);
-      await ch.send({ content: msgText, allowedMentions: { parse: ['everyone'] } });
-    } else if (token) {
-      const rest = new REST({ version: '10' }).setToken(token);
-      await rest.post(Routes.channelMessages(channelId), {
-        body: {
-          content: msgText,
-          allowed_mentions: { parse: ['everyone'] },
-        },
-      });
-    } else {
+    if (!client.isReady() && !token) {
       return { ok: false, reason: 'Token do bot não encontrado' };
     }
 
+    // Reserve next broken interval in Cloud State BEFORE sending to prevent concurrent duplicate triggers
     const nextSec = computeBrokenDelaySec(fsCfg.minMinutes, fsCfg.maxMinutes);
-    const now = Date.now();
     fsCfg.lastSentAt = now;
     fsCfg.lastProduct = chosen.name;
     fsCfg.lastDelaySec = nextSec;
@@ -1469,8 +1462,22 @@ async function sendOneFakeSale(overrideChannelId = '') {
       sentAt: new Date(now).toISOString(),
       nextDelaySec: nextSec,
     });
-    if (fsCfg.history.length > 10) fsCfg.history = fsCfg.history.slice(0, 10);
+    if (fsCfg.history.length > 5) fsCfg.history = fsCfg.history.slice(0, 5);
     await saveConfig(cfg);
+
+    if (client.isReady()) {
+      const ch = await client.channels.fetch(channelId);
+      await ch.send({ content: discordContent, allowedMentions: { parse: ['everyone'] } });
+    } else if (token) {
+      const rest = new REST({ version: '10' }).setToken(token);
+      await rest.post(Routes.channelMessages(channelId), {
+        body: {
+          content: discordContent,
+          allowed_mentions: { parse: ['everyone'] },
+        },
+      });
+    }
+
     return { ok: true, product: chosen.name, catalog: chosen.catalog, message: msgText, nextDelaySec: nextSec, fakeSales: fsCfg };
   } catch (e) {
     console.error('sendOneFakeSale err:', e.message);
@@ -1495,7 +1502,7 @@ async function checkFakeSalesTimer() {
       return;
     }
     if (now >= fsCfg.nextSendAt) {
-      await sendOneFakeSale();
+      await sendOneFakeSale('', false);
     }
   } catch (e) {
     console.error('checkFakeSalesTimer err:', e.message);
@@ -1504,7 +1511,6 @@ async function checkFakeSalesTimer() {
 
   app.get('/api/status', async (req, res) => {
     await Promise.all([loadCloudState(), syncOrdersFromPingo()]);
-    checkFakeSalesTimer().catch(() => {});
     const targetDate = req.query.date || getDateKeyBRT();
     const dayOrders = cfg.orders.filter(o => getDateKeyBRT(o.createdAt) === targetDate);
     const paidList = dayOrders.filter(o => o.status === 'paid' || o.status === 'delivered');
@@ -1968,7 +1974,7 @@ async function checkFakeSalesTimer() {
     if (!cfg.fakeSales) cfg.fakeSales = { ...DEFAULT_FAKE_SALES };
     if (req.body && req.body.channelId) cfg.fakeSales.channelId = String(req.body.channelId).trim();
     if (req.body && req.body.catalogFilter !== undefined) cfg.fakeSales.catalogFilter = String(req.body.catalogFilter).trim();
-    const r = await sendOneFakeSale(cfg.fakeSales.channelId);
+    const r = await sendOneFakeSale(cfg.fakeSales.channelId, true);
     if (!r.ok) return res.status(400).json({ error: r.reason });
     const pool = getRegisteredFakeSaleProducts();
     res.json({

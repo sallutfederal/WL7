@@ -383,7 +383,7 @@
             </div>
             <div class="p-3 rounded-xl space-y-1" style="background: var(--bg3); border: 1px solid var(--border);">
               <div class="text-xs uppercase tracking-wider" style="color: var(--muted);">Formato padrão da mensagem no Discord:</div>
-              <div class="font-mono text-sm font-bold" style="color: var(--accent2);">+1 NOME DO PRODUTO ENTREGUE  @everyone</div>
+              <div class="font-mono text-sm font-bold" style="color: var(--accent2);">+1 &nbsp; NOME DO PRODUTO &nbsp; ENTREGUE &nbsp; @everyone</div>
             </div>
             <div class="flex flex-wrap gap-2 pt-2">
               <button id="btnFsToggle" class="btn-gold flex-1" onclick="toggleFakeSales(true)">
@@ -1203,6 +1203,7 @@
       return m + 'm ' + (r < 10 ? '0' + r : r) + 's';
     }
 
+    let lastFsTriggerRefreshAt = 0;
     function updateFakeSalesCountdown() {
       const fs = state.fakeSales;
       const el = document.getElementById('fsCountdown');
@@ -1224,7 +1225,10 @@
       const diffSec = Math.max(0, Math.ceil((fs.nextSendAt - Date.now()) / 1000));
       if (diffSec <= 0) {
         el.textContent = 'Disparando notificação...';
-        refresh().then(() => renderFakeSales(true)).catch(() => {});
+        if (Date.now() - lastFsTriggerRefreshAt > 8000) {
+          lastFsTriggerRefreshAt = Date.now();
+          refresh().then(() => renderFakeSales(true)).catch(() => {});
+        }
       } else {
         el.textContent = 'Próximo disparo em ' + formatBrokenSec(diffSec) + (fs.lastDelaySec ? ' (tempo quebrado sorteado: ' + formatBrokenSec(fs.lastDelaySec) + ')' : '');
       }
