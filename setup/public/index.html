@@ -639,20 +639,25 @@
 
   <!-- Modal: Product -->
   <div id="modalProduct" class="modal-bg fixed inset-0 z-50 hidden items-center justify-center">
-    <div class="card w-full max-w-md m-4 space-y-4">
+    <div class="card w-full max-w-lg m-4 space-y-4 max-h-[90vh] overflow-y-auto">
       <h3 id="prodModalTitle" class="text-xl font-bold text-accent">Novo Produto</h3>
+      <input type="hidden" id="pOriginalName" value="" />
       <div>
         <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Catálogo</label>
         <select id="pCatalog" class="input"></select>
       </div>
       <div>
         <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Nome do Produto</label>
-        <input id="pName" class="input" placeholder="Ex: 1 SEMANA" />
+        <input id="pName" class="input" placeholder="Ex: CRIAR LARA MP 2026" />
       </div>
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-3 gap-3">
         <div>
-          <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Preço (R$)</label>
-          <input id="pPrice" type="number" step="0.01" class="input" placeholder="100.00" />
+          <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Preço De (Opcional)</label>
+          <input id="pOldPrice" type="number" step="0.01" class="input" placeholder="Ex: 94.90" />
+        </div>
+        <div>
+          <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Preço Para (R$)</label>
+          <input id="pPrice" type="number" step="0.01" class="input" placeholder="74.90" />
         </div>
         <div>
           <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Estoque (-1 = ∞)</label>
@@ -660,8 +665,11 @@
         </div>
       </div>
       <div>
-        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Descrição</label>
-        <input id="pDesc" class="input" placeholder="Descrição opcional" />
+        <div class="flex justify-between items-center mb-1">
+          <label class="block text-xs uppercase" style="color: var(--muted);">Mensagem do Card no Discord (Personalizável)</label>
+          <button type="button" class="text-xs font-medium" style="color: var(--accent2);" onclick="fillTemplateText('pDesc')"><i class="ph-duotone ph-magic-wand"></i> Inserir Modelo de Exemplo</button>
+        </div>
+        <textarea id="pDesc" rows="5" class="input" placeholder="Digite aqui a mensagem que vai aparecer no card do produto no Discord (cada linha vira um tópico destacado)..."></textarea>
       </div>
       <div class="flex justify-end gap-2 pt-2">
         <button class="btn-dark" onclick="closeModal('modalProduct')">Cancelar</button>
@@ -672,19 +680,47 @@
 
   <!-- Modal: Pin -->
   <div id="modalPin" class="modal-bg fixed inset-0 z-50 hidden items-center justify-center">
-    <div class="card w-full max-w-md m-4 space-y-4">
+    <div class="card w-full max-w-lg m-4 space-y-4 max-h-[90vh] overflow-y-auto">
       <h3 class="text-xl font-bold text-accent">Fixar Catálogo em Canal</h3>
-      <div>
-        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Catálogo</label>
-        <select id="pinCatalog" class="input"></select>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Catálogo</label>
+          <select id="pinCatalog" class="input" onchange="syncPinCatalogMessage()"></select>
+        </div>
+        <div>
+          <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Canal do Discord</label>
+          <select id="pinChannel" class="input"></select>
+        </div>
       </div>
       <div>
-        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Canal do Discord</label>
-        <select id="pinChannel" class="input"></select>
+        <div class="flex justify-between items-center mb-1">
+          <label class="block text-xs uppercase" style="color: var(--muted);">Mensagem do Card no Discord (Personalizável)</label>
+          <button type="button" class="text-xs font-medium" style="color: var(--accent2);" onclick="fillTemplateText('pinMessage')"><i class="ph-duotone ph-magic-wand"></i> Inserir Modelo de Exemplo</button>
+        </div>
+        <textarea id="pinMessage" rows="5" class="input" placeholder="Digite aqui sua mensagem personalizada (cada linha aparece destacada no card do Discord)..."></textarea>
       </div>
       <div class="flex justify-end gap-2 pt-2">
         <button class="btn-dark" onclick="closeModal('modalPin')">Cancelar</button>
         <button class="btn-gold" onclick="savePin()">Fixar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Message -->
+  <div id="modalEditMsg" class="modal-bg fixed inset-0 z-50 hidden items-center justify-center">
+    <div class="card w-full max-w-lg m-4 space-y-4">
+      <h3 class="text-xl font-bold text-accent">Configurar Mensagem do Card</h3>
+      <input type="hidden" id="editMsgCatalog" value="" />
+      <div>
+        <div class="flex justify-between items-center mb-1">
+          <label class="block text-xs uppercase" style="color: var(--muted);">Mensagem exibida no Discord</label>
+          <button type="button" class="text-xs font-medium" style="color: var(--accent2);" onclick="fillTemplateText('editMsgText')"><i class="ph-duotone ph-magic-wand"></i> Inserir Modelo de Exemplo</button>
+        </div>
+        <textarea id="editMsgText" rows="6" class="input" placeholder="Digite a mensagem que aparecerá no card do produto no Discord..."></textarea>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button class="btn-dark" onclick="closeModal('modalEditMsg')">Cancelar</button>
+        <button class="btn-gold" onclick="saveCatalogMessage()">Salvar e Atualizar no Discord</button>
       </div>
     </div>
   </div>
@@ -727,8 +763,11 @@
         </div>
       </div>
       <div>
-        <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Mensagem do Anúncio</label>
-        <textarea id="annMessage" rows="4" class="input" placeholder="Texto personalizado do anúncio..."></textarea>
+        <div class="flex justify-between items-center mb-1">
+          <label class="block text-xs uppercase" style="color: var(--muted);">Mensagem do Card no Discord (Personalizável)</label>
+          <button type="button" class="text-xs font-medium" style="color: var(--accent2);" onclick="fillTemplateText('annMessage')"><i class="ph-duotone ph-magic-wand"></i> Inserir Modelo de Exemplo</button>
+        </div>
+        <textarea id="annMessage" rows="5" class="input" placeholder="Digite sua mensagem personalizada que aparecerá no card do produto..."></textarea>
       </div>
       <div>
         <label class="block text-xs uppercase mb-1" style="color: var(--muted);">Produtos incluídos no menu</label>
@@ -1156,9 +1195,9 @@
         return;
       }
       el.innerHTML =
-        '<table class="table"><thead><tr><th>Nome</th><th>Produtos</th><th>Intro</th><th>Ações</th></tr></thead><tbody>' +
+        '<table class="table"><thead><tr><th>Nome</th><th>Produtos</th><th>Mensagem do Card</th><th>Ações</th></tr></thead><tbody>' +
         state.catalogs.map(c =>
-          '<tr><td class="font-semibold">' + esc(c.name) + '</td><td>' + (c.products ? c.products.length : 0) + '</td><td class="text-xs" style="color:var(--muted);">' + esc(c.intro || '-') + '</td><td><button class="btn-red" onclick="deleteCatalog(\'' + esc(c.name) + '\')">Excluir</button></td></tr>'
+          '<tr><td class="font-semibold">' + esc(c.name) + '</td><td>' + (c.products ? c.products.length : 0) + '</td><td class="text-xs" style="color:var(--muted); max-width:340px; white-space:pre-line;">' + esc(c.intro || (c.products && c.products[0] && c.products[0].description) || 'Sem mensagem configurada') + '</td><td class="flex gap-2"><button class="btn-dark" onclick="openEditMessageModal(\'' + esc(c.name) + '\')"><i class="ph-duotone ph-pencil-simple"></i> Configurar Mensagem</button><button class="btn-red" onclick="deleteCatalog(\'' + esc(c.name) + '\')">Excluir</button></td></tr>'
         ).join('') +
         '</tbody></table>';
     }
@@ -1210,11 +1249,12 @@
         return;
       }
       el.innerHTML =
-        '<table class="table"><thead><tr><th>Catálogo</th><th>Nome / Foto</th><th>Preço</th><th>Estoque</th><th>Descrição</th><th>Ações</th></tr></thead><tbody>' +
-        rows.map(p =>
-          '<tr><td>' + esc(p.catalog) + '</td><td>' + buildProductNameBannerHtml(p, false) + '</td><td>' + money(p.price) + '</td><td>' + (p.stock === -1 ? '∞ ilimitado' : esc(p.stock)) + '</td><td class="text-xs" style="color:var(--muted);">' + esc(p.description || '-') + '</td><td class="flex gap-2 items-center"><button class="btn-dark" onclick="editStock(\'' + esc(p.catalog) + '\',\'' + esc(p.name) + '\',' + Number(p.stock) + ')">Estoque</button><button class="btn-red" onclick="deleteProduct(\'' + esc(p.catalog) + '\',\'' + esc(p.name) + '\')">Excluir</button></td></tr>'
+        '<table class="table"><thead><tr><th>Catálogo</th><th>Nome / Foto</th><th>Preço</th><th>Estoque</th><th>Mensagem do Card</th><th>Ações</th></tr></thead><tbody>' +
+        rows.map((p, idx) =>
+          '<tr><td>' + esc(p.catalog) + '</td><td>' + buildProductNameBannerHtml(p, false) + '</td><td>' + (p.oldPrice ? '<div class="text-xs line-through" style="color:var(--muted);">' + money(p.oldPrice) + '</div>' : '') + money(p.price) + '</td><td>' + (p.stock === -1 ? '∞ ilimitado' : esc(p.stock)) + '</td><td class="text-xs" style="color:var(--muted); max-width:280px; white-space:pre-line;">' + esc(p.description || '-') + '</td><td class="flex gap-2 items-center"><button class="btn-gold" onclick="openEditProductByIdx(' + idx + ')"><i class="ph-duotone ph-pencil-simple"></i> Editar / Mensagem</button><button class="btn-dark" onclick="editStock(\'' + esc(p.catalog) + '\',\'' + esc(p.name) + '\',' + Number(p.stock) + ')">Estoque</button><button class="btn-red" onclick="deleteProduct(\'' + esc(p.catalog) + '\',\'' + esc(p.name) + '\')">Excluir</button></td></tr>'
         ).join('') +
         '</tbody></table>';
+      window._currentProductRows = rows;
     }
 
     function renderPhotos(force = false) {
@@ -1580,11 +1620,13 @@
         return;
       }
       el.innerHTML =
-        '<table class="table"><thead><tr><th>Catálogo</th><th>Canal do Discord</th><th>Ações</th></tr></thead><tbody>' +
+        '<table class="table"><thead><tr><th>Catálogo</th><th>Canal do Discord</th><th>Mensagem Atual</th><th>Ações</th></tr></thead><tbody>' +
         state.pins.map(p => {
           const ch = (state.channels || []).find(c => c.id === p.channelId);
           const chLabel = ch ? ('#' + esc(ch.name) + ' (' + esc(p.channelId) + ')') : esc(p.channelId);
-          return '<tr><td class="font-semibold">' + esc(p.catalog) + '</td><td class="text-xs" style="color:var(--muted);">' + chLabel + '</td><td class="flex gap-2"><button class="btn-dark" onclick="refreshPin(\'' + esc(p.catalog) + '\')">Atualizar</button><button class="btn-red" onclick="deletePin(\'' + esc(p.catalog) + '\',\'' + esc(p.channelId) + '\')">Remover</button></td></tr>';
+          const catObj = (state.catalogs || []).find(c => c.name === p.catalog);
+          const msgPreview = (catObj && (catObj.intro || (catObj.products && catObj.products[0] && catObj.products[0].description))) || 'Sem mensagem personalizada';
+          return '<tr><td class="font-semibold">' + esc(p.catalog) + '</td><td class="text-xs" style="color:var(--muted);">' + chLabel + '</td><td class="text-xs" style="color:var(--muted); max-width:300px; white-space:pre-line;">' + esc(msgPreview) + '</td><td class="flex gap-2"><button class="btn-gold" onclick="openEditMessageModal(\'' + esc(p.catalog) + '\')"><i class="ph-duotone ph-pencil-simple"></i> Editar Mensagem</button><button class="btn-dark" onclick="refreshPin(\'' + esc(p.catalog) + '\')">Atualizar</button><button class="btn-red" onclick="deletePin(\'' + esc(p.catalog) + '\',\'' + esc(p.channelId) + '\')">Remover</button></td></tr>';
         }).join('') +
         '</tbody></table>';
     }
@@ -1743,10 +1785,25 @@
       });
     }
 
+    function fillTemplateText(targetId) {
+      const botTitle = (state.status && state.status.botName) ? state.status.botName.toUpperCase() : 'WL7 STORE';
+      const tpl =
+        '👨‍💻 • AO EFETUAR A COMPRA VOCÊ RECEBERÁ DE IMEDIATO NA SUA DM O PASSO A PASSO COMPLETO!\n' +
+        '💰 • O PRODUTO NÃO PRECISA DE MAIS NENHUM INVESTIMENTO ALÉM DO PREÇO DELE, ESSA É A VANTAGEM!\n' +
+        '✅ • MÉTODO NOVO, TESTADO 100% E EXCLUSIVO DA ' + botTitle;
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.value = tpl;
+        el.focus();
+      }
+    }
+
     function openProductModal() {
       const sel = document.getElementById('pCatalog');
-      sel.innerHTML = state.catalogs.map(c => '<option value="' + c.name + '">' + c.name + '</option>').join('');
+      sel.innerHTML = state.catalogs.map(c => '<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>').join('');
+      document.getElementById('pOriginalName').value = '';
       document.getElementById('pName').value = '';
+      document.getElementById('pOldPrice').value = '';
       document.getElementById('pPrice').value = '';
       document.getElementById('pDesc').value = '';
       document.getElementById('pStock').value = '-1';
@@ -1754,24 +1811,46 @@
       openModal('modalProduct');
     }
 
+    function openEditProductByIdx(idx) {
+      const rows = window._currentProductRows || [];
+      const p = rows[idx];
+      if (!p) return;
+      const sel = document.getElementById('pCatalog');
+      sel.innerHTML = state.catalogs.map(c => '<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>').join('');
+      sel.value = p.catalog;
+      document.getElementById('pOriginalName').value = p.name || '';
+      document.getElementById('pName').value = p.name || '';
+      document.getElementById('pOldPrice').value = p.oldPrice ? p.oldPrice : '';
+      document.getElementById('pPrice').value = p.price !== undefined ? p.price : '';
+      const catObj = (state.catalogs || []).find(c => c.name === p.catalog);
+      document.getElementById('pDesc').value = p.description || (catObj && catObj.intro) || '';
+      document.getElementById('pStock').value = p.stock !== undefined ? p.stock : '-1';
+      document.getElementById('prodModalTitle').textContent = 'Editar Produto & Mensagem';
+      openModal('modalProduct');
+    }
+
     async function saveProduct() {
       try {
         const catVal = document.getElementById('pCatalog').value;
         const nameVal = document.getElementById('pName').value.trim() || catVal;
+        const origName = document.getElementById('pOriginalName').value.trim();
+        const descVal = document.getElementById('pDesc').value;
         await api('/api/products', {
           method: 'POST',
           body: {
             catalog: catVal,
+            originalName: origName || undefined,
             name: nameVal,
+            oldPrice: parseFloat(document.getElementById('pOldPrice').value) || 0,
             price: parseFloat(document.getElementById('pPrice').value) || 0,
-            description: document.getElementById('pDesc').value,
+            description: descVal,
             stock: parseInt(document.getElementById('pStock').value),
           },
         });
         closeModal('modalProduct');
         await refresh();
         renderAll();
-        toast('Produto salvo');
+        toast('Produto e mensagem salvos!');
       } catch (e) { toast(e.message); }
     }
 
@@ -1868,6 +1947,19 @@
       } catch (e) { toast(e.message); }
     }
 
+    function syncPinCatalogMessage() {
+      const catName = document.getElementById('pinCatalog').value;
+      const cat = (state.catalogs || []).find(c => c.name === catName);
+      const msgEl = document.getElementById('pinMessage');
+      if (!msgEl) return;
+      if (cat) {
+        const prodDesc = (cat.products && cat.products[0] && cat.products[0].description) || '';
+        msgEl.value = cat.intro || prodDesc || '';
+      } else {
+        msgEl.value = '';
+      }
+    }
+
     async function openPinModal() {
       if (!state.channels || state.channels.length === 0) {
         try {
@@ -1879,6 +1971,7 @@
       }
       document.getElementById('pinCatalog').innerHTML = state.catalogs.map(c => '<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>').join('');
       document.getElementById('pinChannel').innerHTML = state.channels.map(c => '<option value="' + esc(c.id) + '">#' + esc(c.name) + '</option>').join('');
+      syncPinCatalogMessage();
       openModal('modalPin');
     }
 
@@ -1889,12 +1982,36 @@
           body: {
             catalog: document.getElementById('pinCatalog').value,
             channelId: document.getElementById('pinChannel').value,
+            message: document.getElementById('pinMessage').value,
           },
         });
         closeModal('modalPin');
         await refresh();
         renderAll();
         toast('Mensagem fixada!');
+      } catch (e) { toast(e.message); }
+    }
+
+    function openEditMessageModal(catName) {
+      const cat = (state.catalogs || []).find(c => c.name === catName);
+      document.getElementById('editMsgCatalog').value = catName;
+      const prodDesc = (cat && cat.products && cat.products[0] && cat.products[0].description) || '';
+      document.getElementById('editMsgText').value = (cat && cat.intro) || prodDesc || '';
+      openModal('modalEditMsg');
+    }
+
+    async function saveCatalogMessage() {
+      const catName = document.getElementById('editMsgCatalog').value;
+      const newMsg = document.getElementById('editMsgText').value;
+      try {
+        await api('/api/catalogs/' + encodeURIComponent(catName) + '/intro', {
+          method: 'PUT',
+          body: { intro: newMsg },
+        });
+        closeModal('modalEditMsg');
+        await refresh();
+        renderAll();
+        toast('Mensagem atualizada no Discord!');
       } catch (e) { toast(e.message); }
     }
 

@@ -374,16 +374,20 @@ function productCardEmbed(cat, p, customMsg = '') {
       .split(/\r?\n/)
       .map(line => line.trim())
       .filter(Boolean)
-      .map(line => (/^[👨‍💻💰✅⚡🔥📑💵🛒⛔]/.test(line) ? line : ('👨‍💻 • ***' + line + '***')));
+      .map(line => {
+        if (line.includes('*')) return line;
+        const bulletMatch = line.match(/^([^\w\s•-]+\s*•\s*)(.+)$/u);
+        if (bulletMatch) {
+          return bulletMatch[1] + '***' + bulletMatch[2].trim() + '***';
+        }
+        return '***' + line + '***';
+      });
     descParts.push(formattedLines.join('\n\n'));
-  } else {
-    descParts.push(
-      '👨‍💻 • ***AO EFETUAR A COMPRA VOCÊ RECEBERÁ DE IMEDIATO NA SUA DM O SEU PRODUTO COM ENTREGA 100% AUTOMÁTICA!***\n\n' +
-      '💰 • ***O PRODUTO NÃO PRECISA DE MAIS NENHUM INVESTIMENTO ALÉM DO PREÇO DELE, ESSA É A VANTAGEM!***\n\n' +
-      '✅ • ***PRODUTO NOVO, TESTADO 100% E EXCLUSIVO DA ' + String(cfg.botName || 'WL7 STORE').toUpperCase() + '***'
-    );
   }
 
+  if (p && p.oldPrice && Number(p.oldPrice) > 0) {
+    descParts.push('⛔ • **Preço de:**\n~~' + money(p.oldPrice) + '~~');
+  }
   descParts.push('💵 • **Preço para**\n' + money(p ? p.price : 0));
   descParts.push('🛒 • **Estoque:**\n' + ((p && p.stock === -1) ? '∞ Ilimitado' : String(p ? p.stock : 0)));
 
@@ -1630,8 +1634,9 @@ async function checkFakeSalesTimer() {
     await loadCloudState();
     const cat = getCatalog(req.params.name);
     if (!cat) return res.status(404).json({ error: 'not found' });
-    cat.intro = (req.body && req.body.intro) || '';
+    cat.intro = (req.body && req.body.intro !== undefined) ? String(req.body.intro).trim() : '';
     await saveConfig(cfg);
+    await refreshPinsForCatalog(cat.name).catch(() => {});
     res.json({ ok: true });
   });
   app.get('/api/products', async (req, res) => {
@@ -1642,15 +1647,29 @@ async function checkFakeSalesTimer() {
   });
   app.post('/api/products', async (req, res) => {
     await loadCloudState();
-    const { catalog, name, price, description, stock } = req.body || {};
+    const { catalog, name, originalName, price, oldPrice, description, stock } = req.body || {};
     const cat = getCatalog(catalog);
     if (!cat) return res.status(404).json({ error: 'catalog not found' });
     const cleanName = String(name || cat.name || 'PRODUTO').trim().replace(/\s+/g, ' ');
-    const existing = cat.products.find(p => normName(p.name) === normName(cleanName));
-    if (existing) { existing.name = cleanName; existing.price = Number(price); existing.description = description || ''; if (stock !== undefined) existing.stock = Number(stock); }
-    else cat.products.push({ name: cleanName, price: Number(price), description: description || '', stock: stock !== undefined ? Number(stock) : -1 });
+    const lookupName = originalName ? String(originalName).trim() : cleanName;
+    const existing = cat.products.find(p => normName(p.name) === normName(lookupName)) || cat.products.find(p => normName(p.name) === normName(cleanName));
+    if (existing) {
+      existing.name = cleanName;
+      existing.price = Number(price) || 0;
+      existing.oldPrice = (oldPrice !== undefined && oldPrice !== '' && Number(oldPrice) > 0) ? Number(oldPrice) : 0;
+      existing.description = description !== undefined ? String(description) : (existing.description || '');
+      if (stock !== undefined) existing.stock = Number(stock);
+    } else {
+      cat.products.push({
+        name: cleanName,
+        price: Number(price) || 0,
+        oldPrice: (oldPrice !== undefined && oldPrice !== '' && Number(oldPrice) > 0) ? Number(oldPrice) : 0,
+        description: description || '',
+        stock: stock !== undefined ? Number(stock) : -1,
+      });
+    }
     await saveConfig(cfg);
-    refreshPinsForCatalog(cat.name).catch(()=>{});
+    await refreshPinsForCatalog(cat.name).catch(() => {});
     res.json({ ok: true });
   });
   app.delete('/api/products/:catalog/:name', async (req, res) => {
@@ -1906,6 +1925,9 @@ async function checkFakeSalesTimer() {
     if (!cat) return res.status(404).json({ error: 'catalog not found' });
     const channelId = req.body.channelId;
     if (!channelId) return res.status(400).json({ error: 'channelId required' });
+    if (req.body.message !== undefined) {
+      cat.intro = String(req.body.message).trim();
+    }
     try {
       let msgId = null;
       const token = getBotToken();

@@ -2,6 +2,11 @@ function renderAnnounceProducts() {
   const catName = document.getElementById('annCatalog').value;
   const cat = state.catalogs.find(c => c.name === catName);
   const el = document.getElementById('annProducts');
+  const msgEl = document.getElementById('annMessage');
+  if (cat && msgEl) {
+    const prodDesc = (cat.products && cat.products[0] && cat.products[0].description) || '';
+    msgEl.value = cat.intro || prodDesc || '';
+  }
   if (!cat || !cat.products || cat.products.length === 0) { el.innerHTML = '<div class="text-xs" style="color:var(--muted);">Sem produtos</div>'; return; }
   el.innerHTML = cat.products.map(p => '<label class="flex items-center gap-2 text-sm"><input type="checkbox" class="ann-prod" value="' + p.name + '" checked> ' + p.name + ' (' + money(p.price) + ')</label>').join('');
 }
