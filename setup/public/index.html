@@ -7,6 +7,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
@@ -61,23 +62,73 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 11px 16px;
-      border-radius: 10px;
+      padding: 9px 14px;
+      border-radius: 12px;
       color: var(--muted);
       font-size: 14px;
       font-weight: 500;
       text-decoration: none;
-      transition: all 0.2s;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
       cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .nav-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 18px;
+      transition: all 0.22s ease;
+      flex-shrink: 0;
     }
     .nav-link:hover {
       background: var(--bg3);
       color: var(--text);
+      transform: translateX(2px);
+    }
+    .nav-link:hover .nav-icon {
+      border-color: rgba(212, 175, 55, 0.35);
+      color: var(--accent2);
+      background: rgba(212, 175, 55, 0.1);
     }
     .nav-link.active {
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(255, 215, 0, 0.08));
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(255, 215, 0, 0.05));
       color: var(--accent2);
-      border: 1px solid rgba(212, 175, 55, 0.4);
+      border: 1px solid rgba(212, 175, 55, 0.42);
+      box-shadow: 0 4px 20px rgba(212, 175, 55, 0.1);
+    }
+    .nav-link.active .nav-icon {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.28), rgba(255, 215, 0, 0.12));
+      border-color: rgba(255, 215, 0, 0.55);
+      color: var(--accent2);
+      box-shadow: 0 0 14px rgba(212, 175, 55, 0.28);
+    }
+    .kpi-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 23px;
+      flex-shrink: 0;
+      backdrop-filter: blur(8px);
+    }
+    .brand-crest {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 10px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 30% 25%, rgba(255, 215, 0, 0.24), rgba(212, 175, 55, 0.06) 70%);
+      border: 1px solid rgba(255, 215, 0, 0.45);
+      box-shadow: 0 0 24px rgba(212, 175, 55, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
     .main-area {
       margin-left: 260px;
@@ -208,30 +259,41 @@
   <!-- Sidebar -->
   <aside class="sidebar p-6">
     <div class="text-center pb-6 mb-6" style="border-bottom: 1px solid var(--border);">
-      <div class="text-4xl mb-2">🐺</div>
+      <div class="brand-crest">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 3L8.5 8.5L12 6.5L15.5 8.5L20 3L19 11.5L21 15L16.5 18.5L12 21.5L7.5 18.5L3 15L5 11.5L4 3Z" fill="url(#wl7_gold)" fill-opacity="0.22" stroke="url(#wl7_gold)" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M8.5 13L10.5 14.5M15.5 13L13.5 14.5M12 16.5L10.5 18H13.5L12 16.5Z" stroke="#FFD700" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="wl7_gold" x1="3" y1="3" x2="21" y2="21.5" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#FFE066"/>
+              <stop offset="1" stop-color="#B8860B"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
       <h1 id="botNameTop" class="text-lg font-extrabold tracking-wider" style="color: var(--accent2);">WL7 STORE</h1>
       <p class="text-xs uppercase tracking-widest mt-1" style="color: var(--muted);">Painel de Controle</p>
     </div>
 
-    <nav class="space-y-1 flex-1">
-      <a href="#" data-view="dashboard" class="nav-link active"><i class="fa-solid fa-chart-pie w-5 text-center"></i> Dashboard</a>
-      <a href="#" data-view="catalogs" class="nav-link"><i class="fa-solid fa-box-archive w-5 text-center"></i> Catálogos</a>
-      <a href="#" data-view="products" class="nav-link"><i class="fa-solid fa-cart-shopping w-5 text-center"></i> Produtos</a>
-      <a href="#" data-view="photos" class="nav-link"><i class="fa-solid fa-images w-5 text-center"></i> Fotos dos Produtos</a>
-      <a href="#" data-view="fakesales" class="nav-link"><i class="fa-solid fa-bolt w-5 text-center"></i> Vendas Fake</a>
-      <a href="#" data-view="orders" class="nav-link"><i class="fa-solid fa-receipt w-5 text-center"></i> Pedidos</a>
-      <a href="#" data-view="pins" class="nav-link"><i class="fa-solid fa-thumbtack w-5 text-center"></i> Mensagens Fixas</a>
-      <a href="#" data-view="bots" class="nav-link"><i class="fa-solid fa-robot w-5 text-center"></i> Bots / Webhooks</a>
-      <a href="#" data-view="settings" class="nav-link"><i class="fa-solid fa-gear w-5 text-center"></i> Configurações</a>
+    <nav class="space-y-1.5 flex-1">
+      <a href="#" data-view="dashboard" class="nav-link active"><span class="nav-icon"><i class="ph-duotone ph-squares-four"></i></span> Dashboard</a>
+      <a href="#" data-view="catalogs" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-stack"></i></span> Catálogos</a>
+      <a href="#" data-view="products" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-package"></i></span> Produtos</a>
+      <a href="#" data-view="photos" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-camera-plus"></i></span> Fotos dos Produtos</a>
+      <a href="#" data-view="fakesales" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-lightning"></i></span> Vendas Fake</a>
+      <a href="#" data-view="orders" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-receipt"></i></span> Pedidos</a>
+      <a href="#" data-view="pins" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-push-pin"></i></span> Mensagens Fixas</a>
+      <a href="#" data-view="bots" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-webhooks-logo"></i></span> Bots / Webhooks</a>
+      <a href="#" data-view="settings" class="nav-link"><span class="nav-icon"><i class="ph-duotone ph-sliders-horizontal"></i></span> Configurações</a>
     </nav>
 
     <div class="pt-4 space-y-2" style="border-top: 1px solid var(--border);">
       <button class="btn-gold w-full flex items-center justify-center gap-2" onclick="openAnnounceModal()">
-        <i class="fa-solid fa-bullhorn"></i> Anunciar Catálogo
+        <i class="ph-duotone ph-megaphone text-lg"></i> Anunciar Catálogo
       </button>
       <div class="grid grid-cols-2 gap-2">
         <button id="themeToggle" class="btn-dark w-full text-xs" onclick="toggleTheme()">Modo claro</button>
-        <button class="btn-red w-full text-xs flex items-center justify-center gap-1" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+        <button class="btn-red w-full text-xs flex items-center justify-center gap-1.5" onclick="logout()"><i class="ph-bold ph-sign-out text-sm"></i> Sair</button>
       </div>
     </div>
   </aside>
@@ -243,10 +305,10 @@
       <div class="flex items-center gap-4">
         <h2 id="viewTitle" class="text-2xl font-bold" style="color: var(--accent2);">Dashboard</h2>
         <div class="flex items-center gap-1 px-2 py-1 rounded-xl" style="background: var(--bg3); border: 1px solid var(--border);">
-          <button class="btn-dark" style="padding: 4px 10px; font-size: 12px;" onclick="stepDay(-1)" title="Dia anterior">&laquo;</button>
+          <button class="btn-dark" style="padding: 4px 10px; font-size: 12px;" onclick="stepDay(-1)" title="Dia anterior"><i class="ph-bold ph-caret-left"></i></button>
           <input id="dayPicker" type="date" class="input" style="width: 142px; padding: 4px 8px; font-size: 12px; border: none; background: transparent;" onchange="setExactDay(this.value)" />
-          <button class="btn-dark" style="padding: 4px 10px; font-size: 12px;" onclick="stepDay(1)" title="Próximo dia">&raquo;</button>
-          <button id="btnToday" class="btn-gold" style="padding: 4px 10px; font-size: 11px;" onclick="goToday()">Hoje</button>
+          <button class="btn-dark" style="padding: 4px 10px; font-size: 12px;" onclick="stepDay(1)" title="Próximo dia"><i class="ph-bold ph-caret-right"></i></button>
+          <button id="btnToday" class="btn-gold flex items-center gap-1" style="padding: 4px 10px; font-size: 11px;" onclick="goToday()"><i class="ph-bold ph-calendar-check"></i> Hoje</button>
         </div>
         <span id="dayLabel" class="text-xs font-semibold" style="color: var(--accent);"></span>
       </div>
@@ -265,13 +327,13 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="card">
-            <h3 class="text-sm font-semibold uppercase tracking-wider mb-4" style="color: var(--accent2);">Pedidos por Status</h3>
+            <h3 class="text-sm font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style="color: var(--accent2);"><i class="ph-duotone ph-chart-donut text-lg"></i> Pedidos por Status</h3>
             <div style="height: 260px; display: flex; align-items: center; justify-content: center;">
               <canvas id="chartStatus"></canvas>
             </div>
           </div>
           <div class="card">
-            <h3 class="text-sm font-semibold uppercase tracking-wider mb-4" style="color: var(--accent2);">Receita por Catálogo</h3>
+            <h3 class="text-sm font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style="color: var(--accent2);"><i class="ph-duotone ph-chart-bar text-lg"></i> Receita por Catálogo</h3>
             <div style="height: 260px;">
               <canvas id="chartCatalog"></canvas>
             </div>
@@ -280,8 +342,8 @@
 
         <div class="card">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-semibold uppercase tracking-wider" style="color: var(--accent2);">Últimos Pedidos (PIX PingoCash)</h3>
-            <button class="btn-dark text-xs" onclick="refresh().then(renderAll)"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+            <h3 class="text-sm font-semibold uppercase tracking-wider flex items-center gap-2" style="color: var(--accent2);"><i class="ph-duotone ph-pix-logo text-lg"></i> Últimos Pedidos (PIX PingoCash)</h3>
+            <button class="btn-dark text-xs flex items-center gap-1.5" onclick="refresh().then(renderAll)"><i class="ph-bold ph-arrows-clockwise"></i> Atualizar</button>
           </div>
           <div id="recentOrders"></div>
         </div>
@@ -291,7 +353,7 @@
       <section id="view-catalogs" class="view space-y-6">
         <div class="flex justify-between items-center">
           <p class="text-sm" style="color: var(--muted);">Gerencie os catálogos disponíveis no bot Discord.</p>
-          <button class="btn-gold" onclick="openCatalogModal()"><i class="fa-solid fa-plus"></i> Novo Catálogo</button>
+          <button class="btn-gold flex items-center gap-1.5" onclick="openCatalogModal()"><i class="ph-bold ph-plus-circle text-base"></i> Novo Catálogo</button>
         </div>
         <div class="card" id="catalogsTable"></div>
       </section>
@@ -305,7 +367,7 @@
               <option value="">Todos</option>
             </select>
           </div>
-          <button class="btn-gold" onclick="openProductModal()"><i class="fa-solid fa-plus"></i> Novo Produto</button>
+          <button class="btn-gold flex items-center gap-1.5" onclick="openProductModal()"><i class="ph-bold ph-plus-circle text-base"></i> Novo Produto</button>
         </div>
         <div class="card" id="productsTable"></div>
       </section>
@@ -335,7 +397,7 @@
               <div id="fsStatusBadge" class="mt-2"></div>
               <div id="fsCountdown" class="text-xs mt-2 font-semibold" style="color: var(--accent2);"></div>
             </div>
-            <div class="text-3xl" style="color: var(--accent2);"><i class="fa-solid fa-bolt"></i></div>
+            <div class="kpi-icon" style="color: var(--accent2); background: rgba(212,175,55,0.16); border: 1px solid rgba(255,215,0,0.4); box-shadow: 0 0 18px rgba(212,175,55,0.2);"><i class="ph-duotone ph-lightning"></i></div>
           </div>
           <div class="card flex items-center justify-between">
             <div>
@@ -343,7 +405,7 @@
               <div id="fsProdCount" class="text-2xl font-bold mt-1" style="color: var(--blue);">0</div>
               <div class="text-xs mt-1" style="color: var(--muted);">Se 0 cadastrados, não envia nada</div>
             </div>
-            <div class="text-2xl" style="color: var(--blue);"><i class="fa-solid fa-boxes-stacked"></i></div>
+            <div class="kpi-icon" style="color: var(--blue); background: rgba(59,130,246,0.14); border: 1px solid rgba(59,130,246,0.38);"><i class="ph-duotone ph-cube-focus"></i></div>
           </div>
           <div class="card flex items-center justify-between">
             <div>
@@ -351,13 +413,13 @@
               <div id="fsTotalSent" class="text-2xl font-bold mt-1" style="color: var(--green);">0</div>
               <div id="fsLastSent" class="text-xs mt-1" style="color: var(--muted);">Nenhum envio ainda</div>
             </div>
-            <div class="text-2xl" style="color: var(--green);"><i class="fa-solid fa-paper-plane"></i></div>
+            <div class="kpi-icon" style="color: var(--green); background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.38);"><i class="ph-duotone ph-paper-plane-tilt"></i></div>
           </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="card space-y-4">
-            <h3 class="text-lg font-bold" style="color: var(--accent2);"><i class="fa-solid fa-sliders mr-2"></i>Configurar Vendas Fake</h3>
+            <h3 class="text-lg font-bold flex items-center gap-2" style="color: var(--accent2);"><i class="ph-duotone ph-faders text-xl"></i>Configurar Vendas Fake</h3>
             <p class="text-xs" style="color: var(--muted);">
               Envia notificações automáticas de vendas para o canal selecionado sorteando apenas entre os produtos realmente cadastrados no sistema, em intervalos de <strong>tempo quebrado</strong> (minutos e segundos irregulares para parecer 100% natural).
             </p>
@@ -386,20 +448,20 @@
               <div class="font-mono text-sm font-bold" style="color: var(--accent2);">+1 &nbsp; NOME DO PRODUTO &nbsp; ENTREGUE &nbsp; @everyone</div>
             </div>
             <div class="flex flex-wrap gap-2 pt-2">
-              <button id="btnFsToggle" class="btn-gold flex-1" onclick="toggleFakeSales(true)">
-                <i class="fa-solid fa-power-off mr-1"></i> Ativar Vendas Fake
+              <button id="btnFsToggle" class="btn-gold flex-1 flex items-center justify-center gap-1.5" onclick="toggleFakeSales(true)">
+                <i class="ph-bold ph-power"></i> Ativar Vendas Fake
               </button>
-              <button class="btn-dark" onclick="saveFakeSalesConfig()">
-                <i class="fa-solid fa-floppy-disk mr-1"></i> Salvar Intervalo/Canal
+              <button class="btn-dark flex items-center gap-1.5" onclick="saveFakeSalesConfig()">
+                <i class="ph-duotone ph-floppy-disk text-base"></i> Salvar Intervalo/Canal
               </button>
-              <button class="btn-green" onclick="sendFakeSaleNow()">
-                <i class="fa-solid fa-paper-plane mr-1"></i> Disparar 1 Agora
+              <button class="btn-green flex items-center gap-1.5" onclick="sendFakeSaleNow()">
+                <i class="ph-duotone ph-paper-plane-tilt text-base"></i> Disparar 1 Agora
               </button>
             </div>
           </div>
 
           <div class="card space-y-4">
-            <h3 class="text-lg font-bold" style="color: var(--accent2);"><i class="fa-solid fa-clock-rotate-left mr-2"></i>Últimas Notificações &amp; Produtos no Sorteio</h3>
+            <h3 class="text-lg font-bold flex items-center gap-2" style="color: var(--accent2);"><i class="ph-duotone ph-clock-counter-clockwise text-xl"></i>Últimas Notificações &amp; Produtos no Sorteio</h3>
             <div>
               <div class="text-xs uppercase tracking-wider mb-2" style="color: var(--muted);">Produtos cadastrados disponíveis para sorteio:</div>
               <div id="fsEligibleList" class="flex flex-wrap gap-2"></div>
@@ -425,7 +487,7 @@
               <option value="cancelled">Cancelados</option>
             </select>
           </div>
-          <button class="btn-dark" onclick="refresh().then(renderAll)"><i class="fa-solid fa-rotate"></i> Atualizar Pedidos</button>
+          <button class="btn-dark flex items-center gap-1.5" onclick="refresh().then(renderAll)"><i class="ph-bold ph-arrows-clockwise"></i> Atualizar Pedidos</button>
         </div>
         <div class="card" id="ordersTable"></div>
       </section>
@@ -434,7 +496,7 @@
       <section id="view-pins" class="view space-y-6">
         <div class="flex justify-between items-center">
           <p class="text-sm" style="color: var(--muted);">Mensagens interativas fixadas nos canais do Discord.</p>
-          <button class="btn-gold" onclick="openPinModal()"><i class="fa-solid fa-thumbtack"></i> Fixar Catálogo</button>
+          <button class="btn-gold flex items-center gap-1.5" onclick="openPinModal()"><i class="ph-duotone ph-push-pin text-base"></i> Fixar Catálogo</button>
         </div>
         <div class="card" id="pinsTable"></div>
       </section>
@@ -443,7 +505,7 @@
       <section id="view-bots" class="view space-y-6">
         <div class="flex justify-between items-center">
           <p class="text-sm" style="color: var(--muted);">Webhooks e bots parceiros registrados para sincronização.</p>
-          <button class="btn-gold" onclick="openBotModal()"><i class="fa-solid fa-plus"></i> Registrar Bot</button>
+          <button class="btn-gold flex items-center gap-1.5" onclick="openBotModal()"><i class="ph-bold ph-plus-circle text-base"></i> Registrar Bot</button>
         </div>
         <div class="card" id="botsTable"></div>
       </section>
@@ -451,7 +513,7 @@
       <!-- View: Settings -->
       <section id="view-settings" class="view space-y-6">
         <div class="card max-w-2xl space-y-4">
-          <h3 class="text-lg font-bold" style="color: var(--accent2);">Identidade do Bot</h3>
+          <h3 class="text-lg font-bold flex items-center gap-2" style="color: var(--accent2);"><i class="ph-duotone ph-identification-badge text-xl"></i> Identidade do Bot</h3>
           <div>
             <label class="block text-xs uppercase tracking-wider mb-1" style="color: var(--muted);">Nome do Bot</label>
             <input id="sName" class="input" placeholder="WL7 STORE" />
@@ -469,7 +531,7 @@
             <input id="sBanner" class="input" placeholder="https://..." />
           </div>
           <div class="pt-2">
-            <button class="btn-gold" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Salvar Configurações</button>
+            <button class="btn-gold flex items-center gap-1.5" onclick="saveSettings()"><i class="ph-duotone ph-floppy-disk text-base"></i> Salvar Configurações</button>
           </div>
         </div>
       </section>
@@ -945,27 +1007,27 @@
       if (!state.status) return;
       document.getElementById('cards').innerHTML =
         '<div class="card" style="background: linear-gradient(135deg, rgba(212,175,55,.15), var(--bg2)); border: 1px solid var(--accent2);">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Receita Total</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--accent2);">' + money(state.status.revenue) + '</div></div><div style="font-size:22px;color:var(--accent2);"><i class="fa-solid fa-coins"></i></div></div>' +
-          '<div style="font-size:12px;margin-top:8px;color:var(--green);"><i class="fa-solid fa-arrow-trend-up"></i> ' + state.status.paidOrders + ' pagos</div>' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Receita Total</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--accent2);">' + money(state.status.revenue) + '</div></div><div class="kpi-icon" style="color:var(--accent2); background:rgba(212,175,55,0.16); border:1px solid rgba(255,215,0,0.4);"><i class="ph-duotone ph-currency-circle-dollar"></i></div></div>' +
+          '<div style="font-size:12px;margin-top:8px;color:var(--green);display:flex;align-items:center;gap:4px;"><i class="ph-bold ph-trend-up"></i> ' + state.status.paidOrders + ' pagos</div>' +
         '</div>' +
         '<div class="card" style="background: linear-gradient(135deg, rgba(34,197,94,.12), var(--bg2)); border: 1px solid var(--green);">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pedidos Pagos</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--green);">' + state.status.paidOrders + '</div></div><div style="font-size:22px;color:var(--green);"><i class="fa-solid fa-circle-check"></i></div></div>' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pedidos Pagos</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--green);">' + state.status.paidOrders + '</div></div><div class="kpi-icon" style="color:var(--green); background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.4);"><i class="ph-duotone ph-seal-check"></i></div></div>' +
           '<div style="font-size:12px;margin-top:8px;color:var(--muted);">' + state.status.pendingOrders + ' pendentes</div>' +
         '</div>' +
         '<div class="card" style="background: linear-gradient(135deg, rgba(59,130,246,.12), var(--bg2)); border: 1px solid var(--blue);">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Produtos</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--blue);">' + state.status.products + '</div></div><div style="font-size:22px;color:var(--blue);"><i class="fa-solid fa-cart-shopping"></i></div></div>' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Produtos</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--blue);">' + state.status.products + '</div></div><div class="kpi-icon" style="color:var(--blue); background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4);"><i class="ph-duotone ph-cube-focus"></i></div></div>' +
           '<div style="font-size:12px;margin-top:8px;color:var(--muted);">' + state.status.catalogs + ' catálogos</div>' +
         '</div>' +
         '<div class="card" style="background: linear-gradient(135deg, rgba(234,179,8,.12), var(--bg2)); border: 1px solid var(--yellow);">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pendentes</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--yellow);">' + state.status.pendingOrders + '</div></div><div style="font-size:22px;color:var(--yellow);"><i class="fa-solid fa-clock"></i></div></div>' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pendentes</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--yellow);">' + state.status.pendingOrders + '</div></div><div class="kpi-icon" style="color:var(--yellow); background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.4);"><i class="ph-duotone ph-hourglass-medium"></i></div></div>' +
           '<div style="font-size:12px;margin-top:8px;color:var(--yellow);">' + money(state.status.pendingRevenue || 0) + ' aguardando PIX</div>' +
         '</div>' +
         '<div class="card" style="background: linear-gradient(135deg, rgba(212,175,55,.12), var(--bg2)); border: 1px solid var(--accent);">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Bots</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--accent2);">' + state.status.targets + '</div></div><div style="font-size:22px;color:var(--accent2);"><i class="fa-solid fa-robot"></i></div></div>' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Bots</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:var(--accent2);">' + state.status.targets + '</div></div><div class="kpi-icon" style="color:var(--accent2); background:rgba(212,175,55,0.15); border:1px solid rgba(212,175,55,0.4);"><i class="ph-duotone ph-cpu"></i></div></div>' +
           '<div style="font-size:12px;margin-top:8px;color:var(--muted);">registrados</div>' +
         '</div>' +
         '<div class="card" style="background: linear-gradient(135deg, rgba(236,72,153,.12), var(--bg2)); border: 1px solid #ec4899;">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Fixadas</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:#ec4899;">' + state.status.pins + '</div></div><div style="font-size:22px;color:#ec4899;"><i class="fa-solid fa-thumbtack"></i></div></div>' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Fixadas</div><div style="font-size:24px;font-weight:700;margin-top:8px;color:#ec4899;">' + state.status.pins + '</div></div><div class="kpi-icon" style="color:#ec4899; background:rgba(236,72,153,0.15); border:1px solid rgba(236,72,153,0.4);"><i class="ph-duotone ph-bookmark-simple"></i></div></div>' +
           '<div style="font-size:12px;margin-top:8px;color:var(--muted);">mensagens ativas</div>' +
         '</div>';
 
@@ -1079,7 +1141,7 @@
           '<div class="card space-y-4">' +
             '<div class="flex items-center justify-between pb-3" style="border-bottom: 1px solid var(--border);">' +
               '<div>' +
-                '<h3 class="text-lg font-bold" style="color: var(--accent2);"><i class="fa-solid fa-box-open mr-2"></i>Catálogo: ' + esc(cat.name.toUpperCase()) + '</h3>' +
+                '<h3 class="text-lg font-bold flex items-center gap-2" style="color: var(--accent2);"><i class="ph-duotone ph-stack text-xl"></i>Catálogo: ' + esc(cat.name.toUpperCase()) + '</h3>' +
                 '<p class="text-xs mt-1" style="color: var(--muted);">' + prods.length + ' produto(s) neste catálogo — configure a foto individual e o tamanho atrás do nome para cada um</p>' +
               '</div>' +
             '</div>';
@@ -1117,9 +1179,9 @@
                 '</div>' +
                 '<div class="flex flex-wrap items-center gap-2">' +
                   '<input id="url_' + key + '" type="text" class="input text-xs flex-1" placeholder="Ou cole a URL da imagem (https://...)" value="' + esc(p.imageUrl || '') + '" />' +
-                  '<button id="btn_' + key + '" class="btn-gold text-xs" onclick="saveProductPhoto(\'' + esc(cat.name) + '\', \'' + esc(p.name) + '\', \'' + key + '\', false)"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>Salvar Foto</button>' +
+                  '<button id="btn_' + key + '" class="btn-gold text-xs flex items-center gap-1" onclick="saveProductPhoto(\'' + esc(cat.name) + '\', \'' + esc(p.name) + '\', \'' + key + '\', false)"><i class="ph-duotone ph-cloud-arrow-up text-sm"></i>Salvar Foto</button>' +
                   (hasPhoto
-                    ? '<button class="btn-red text-xs" onclick="removeProductPhoto(\'' + esc(cat.name) + '\', \'' + esc(p.name) + '\')"><i class="fa-solid fa-trash mr-1"></i>Remover</button>'
+                    ? '<button class="btn-red text-xs flex items-center gap-1" onclick="removeProductPhoto(\'' + esc(cat.name) + '\', \'' + esc(p.name) + '\')"><i class="ph-duotone ph-trash text-sm"></i>Remover</button>'
                     : '') +
                 '</div>' +
               '</div>';
@@ -1265,23 +1327,23 @@
       const statusBadge = document.getElementById('fsStatusBadge');
       if (statusBadge) {
         if (fs.enabled && effectiveCount > 0) {
-          statusBadge.innerHTML = '<span class="badge badge-paid"><i class="fa-solid fa-circle-play mr-1"></i>ATIVO — TEMPO QUEBRADO</span>';
+          statusBadge.innerHTML = '<span class="badge badge-paid inline-flex items-center gap-1"><i class="ph-fill ph-play-circle"></i>ATIVO — TEMPO QUEBRADO</span>';
         } else if (fs.enabled && effectiveCount <= 0) {
-          statusBadge.innerHTML = '<span class="badge badge-pending"><i class="fa-solid fa-triangle-exclamation mr-1"></i>PAUSADO (SEM PRODUTOS)</span>';
+          statusBadge.innerHTML = '<span class="badge badge-pending inline-flex items-center gap-1"><i class="ph-fill ph-warning-octagon"></i>PAUSADO (SEM PRODUTOS)</span>';
         } else {
-          statusBadge.innerHTML = '<span class="badge badge-cancelled"><i class="fa-solid fa-circle-stop mr-1"></i>DESATIVADO</span>';
+          statusBadge.innerHTML = '<span class="badge badge-cancelled inline-flex items-center gap-1"><i class="ph-fill ph-stop-circle"></i>DESATIVADO</span>';
         }
       }
 
       const btnToggle = document.getElementById('btnFsToggle');
       if (btnToggle) {
         if (fs.enabled) {
-          btnToggle.className = 'btn-red flex-1';
-          btnToggle.innerHTML = '<i class="fa-solid fa-power-off mr-1"></i> Desativar Vendas Fake';
+          btnToggle.className = 'btn-red flex-1 flex items-center justify-center gap-1.5';
+          btnToggle.innerHTML = '<i class="ph-bold ph-power"></i> Desativar Vendas Fake';
           btnToggle.setAttribute('onclick', 'toggleFakeSales(false)');
         } else {
-          btnToggle.className = 'btn-gold flex-1';
-          btnToggle.innerHTML = '<i class="fa-solid fa-power-off mr-1"></i> Ativar Vendas Fake';
+          btnToggle.className = 'btn-gold flex-1 flex items-center justify-center gap-1.5';
+          btnToggle.innerHTML = '<i class="ph-bold ph-power"></i> Ativar Vendas Fake';
           btnToggle.setAttribute('onclick', 'toggleFakeSales(true)');
         }
       }

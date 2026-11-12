@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR" class="dark">
 <head>
 <meta charset="UTF-8">
@@ -19,16 +19,39 @@
   .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #000; margin-top: 8px; }
   .btn:hover { filter: brightness(1.1); }
   .error { color: var(--red); font-size: 13px; margin-top: 12px; text-align: center; display: none; }
-  .wolf { font-size: 48px; display: block; margin-bottom: 8px; }
+  .brand-crest {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 30% 25%, rgba(255, 215, 0, 0.25), rgba(212, 175, 55, 0.06) 70%);
+    border: 1px solid rgba(255, 215, 0, 0.45);
+    box-shadow: 0 0 28px rgba(212, 175, 55, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
 </style>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
   <div class="login-box">
     <div class="logo">
-      <span class="wolf">&#128058;</span>
+      <div class="brand-crest">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 3L8.5 8.5L12 6.5L15.5 8.5L20 3L19 11.5L21 15L16.5 18.5L12 21.5L7.5 18.5L3 15L5 11.5L4 3Z" fill="url(#wl7_gold)" fill-opacity="0.22" stroke="url(#wl7_gold)" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M8.5 13L10.5 14.5M15.5 13L13.5 14.5M12 16.5L10.5 18H13.5L12 16.5Z" stroke="#FFD700" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="wl7_gold" x1="3" y1="3" x2="21" y2="21.5" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#FFE066"/>
+              <stop offset="1" stop-color="#B8860B"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
       <h1>WL7 STORE</h1>
-      <p>Acesso Restrito</p>
+      <p><i class="ph-duotone ph-shield-check" style="vertical-align: middle; color: var(--accent2);"></i> Acesso Restrito</p>
     </div>
     <form id="loginForm">
       <div class="form-group">
