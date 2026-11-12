@@ -237,13 +237,20 @@
   <!-- Main Content -->
   <div class="main-area">
     <!-- Topbar -->
-    <header class="topbar">
-      <div>
+    <header class="topbar flex-wrap">
+      <div class="flex items-center gap-4">
         <h2 id="viewTitle" class="text-2xl font-bold" style="color: var(--accent2);">Dashboard</h2>
+        <div class="flex items-center gap-1 px-2 py-1 rounded-xl" style="background: var(--bg3); border: 1px solid var(--border);">
+          <button class="btn-dark" style="padding: 4px 10px; font-size: 12px;" onclick="stepDay(-1)" title="Dia anterior">&laquo;</button>
+          <input id="dayPicker" type="date" class="input" style="width: 142px; padding: 4px 8px; font-size: 12px; border: none; background: transparent;" onchange="setExactDay(this.value)" />
+          <button class="btn-dark" style="padding: 4px 10px; font-size: 12px;" onclick="stepDay(1)" title="Próximo dia">&raquo;</button>
+          <button id="btnToday" class="btn-gold" style="padding: 4px 10px; font-size: 11px;" onclick="goToday()">Hoje</button>
+        </div>
+        <span id="dayLabel" class="text-xs font-semibold" style="color: var(--accent);"></span>
       </div>
       <div class="flex items-center gap-6 text-xs">
-        <div><span style="color: var(--muted);">Receita:</span> <strong id="tRevenue" style="color: var(--accent2);">R$ 0,00</strong></div>
-        <div><span style="color: var(--muted);">Pagos:</span> <strong id="tPaid" style="color: var(--green);">0</strong></div>
+        <div><span style="color: var(--muted);">Receita do Dia:</span> <strong id="tRevenue" style="color: var(--accent2);">R$ 0,00</strong></div>
+        <div><span style="color: var(--muted);">Pagos Hoje:</span> <strong id="tPaid" style="color: var(--green);">0</strong></div>
         <div><span style="color: var(--muted);">Pendentes:</span> <strong id="tPending" style="color: var(--yellow);">0</strong></div>
         <div><span style="color: var(--muted);">Produtos:</span> <strong id="tProducts" style="color: var(--blue);">0</strong></div>
       </div>
@@ -524,6 +531,61 @@
     let dashOrdersPage = 1;
     const ORDERS_PER_PAGE = 5;
 
+    function getTodayBRT() {
+      try {
+        return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+      } catch (e) {
+        return new Date().toISOString().slice(0, 10);
+      }
+    }
+
+    let selectedDate = getTodayBRT();
+    let isTrackingToday = true;
+
+    function formatDateBR(yyyyMmDd) {
+      if (!yyyyMmDd) return '';
+      const parts = String(yyyyMmDd).split('-');
+      if (parts.length !== 3) return yyyyMmDd;
+      return parts[2] + '/' + parts[1] + '/' + parts[0];
+    }
+
+    function updateDayPickerUI() {
+      const picker = document.getElementById('dayPicker');
+      if (picker && picker.value !== selectedDate) picker.value = selectedDate;
+      const lbl = document.getElementById('dayLabel');
+      const today = getTodayBRT();
+      if (lbl) {
+        lbl.textContent = (selectedDate === today ? 'Hoje • ' : 'Dia • ') + formatDateBR(selectedDate);
+      }
+    }
+
+    async function setExactDay(val) {
+      if (!val) return;
+      selectedDate = val;
+      isTrackingToday = (selectedDate === getTodayBRT());
+      ordersPage = 1;
+      dashOrdersPage = 1;
+      updateDayPickerUI();
+      await refresh();
+      renderAll();
+    }
+
+    async function stepDay(offset) {
+      const parts = selectedDate.split('-').map(Number);
+      const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + offset));
+      const next = d.toISOString().slice(0, 10);
+      await setExactDay(next);
+    }
+
+    async function goToday() {
+      isTrackingToday = true;
+      await setExactDay(getTodayBRT());
+    }
+
+    window.setExactDay = setExactDay;
+    window.stepDay = stepDay;
+    window.goToday = goToday;
+
     function goOrdersPage(p) {
       ordersPage = p;
       renderOrders();
@@ -671,9 +733,17 @@
 
     async function refresh() {
       try {
-        state.status = await api('/api/status');
+        const todayNow = getTodayBRT();
+        if (isTrackingToday && selectedDate !== todayNow) {
+          selectedDate = todayNow;
+          ordersPage = 1;
+          dashOrdersPage = 1;
+        }
+        updateDayPickerUI();
+        const q = '?date=' + encodeURIComponent(selectedDate);
+        state.status = await api('/api/status' + q);
         state.catalogs = await api('/api/catalogs');
-        state.orders = await api('/api/orders');
+        state.orders = await api('/api/orders' + q);
         state.targets = await api('/api/targets');
         state.pins = await api('/api/pins');
         state.channels = await api('/api/channels');

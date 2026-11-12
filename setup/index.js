@@ -1154,20 +1154,34 @@ client.once('clientReady', async () => {
   app.get('/login', (req, res) => res.sendFile(require('path').join(__dirname, 'public', 'login.html')));
   app.use(express.static(path.join(__dirname, 'public')));
   // API endpoints
+function getDateKeyBRT(dateInput) {
+  try {
+    const d = dateInput ? new Date(dateInput) : new Date();
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  } catch (e) {
+    const d = dateInput ? new Date(dateInput) : new Date();
+    return d.toISOString().slice(0, 10);
+  }
+}
+
   app.get('/api/status', async (req, res) => {
     await syncOrdersFromPingo();
-    const paidList = cfg.orders.filter(o => o.status === 'paid' || o.status === 'delivered');
-    const pendingList = cfg.orders.filter(o => o.status === 'pending');
+    const targetDate = req.query.date || getDateKeyBRT();
+    const dayOrders = cfg.orders.filter(o => getDateKeyBRT(o.createdAt) === targetDate);
+    const paidList = dayOrders.filter(o => o.status === 'paid' || o.status === 'delivered');
+    const pendingList = dayOrders.filter(o => o.status === 'pending');
     const revenue = paidList.reduce((a, o) => a + Number(o.amount || 0), 0);
     const pendingRevenue = pendingList.reduce((a, o) => a + Number(o.amount || 0), 0);
     res.json({
+      date: targetDate,
       botName: cfg.botName,
       currency: cfg.currency,
       botAvatar: cfg.botAvatar,
       botBanner: cfg.botBanner,
       catalogs: cfg.catalogs.length,
       products: cfg.catalogs.reduce((a, c) => a + (c.products ? c.products.length : 0), 0),
-      orders: cfg.orders.length,
+      orders: dayOrders.length,
       targets: cfg.targets.length,
       pins: cfg.pins.length,
       pendingOrders: pendingList.length,
@@ -1235,7 +1249,9 @@ client.once('clientReady', async () => {
   });
   app.get('/api/orders', async (req, res) => {
     await syncOrdersFromPingo();
-    res.json(cfg.orders.slice().reverse());
+    const targetDate = req.query.date || getDateKeyBRT();
+    const dayOrders = cfg.orders.filter(o => getDateKeyBRT(o.createdAt) === targetDate);
+    res.json(dayOrders.slice().reverse());
   });
   app.put('/api/orders/:id/status', (req, res) => {
     const order = cfg.orders.find(o => o.id === Number(req.params.id));
