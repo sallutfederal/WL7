@@ -104,6 +104,24 @@ function writeLocalConfig(c) {
   }
 }
 
+function normalizeCatalogProducts(catalogs) {
+  if (!Array.isArray(catalogs)) return;
+  for (const cat of catalogs) {
+    if (!cat) continue;
+    if (cat.intro === undefined) cat.intro = '';
+    if (!Array.isArray(cat.products)) cat.products = [];
+    for (const p of cat.products) {
+      if (!p) continue;
+      if (!p.name || !String(p.name).trim()) {
+        p.name = String(cat.name || 'PRODUTO').trim();
+      } else {
+        p.name = String(p.name).trim().replace(/\s+/g, ' ');
+      }
+      if (p.stock === undefined) p.stock = -1;
+    }
+  }
+}
+
 function loadConfig() {
   try {
     const file = getReadableConfigFile();
@@ -121,13 +139,7 @@ function loadConfig() {
         delete c.products;
       }
       if (!Array.isArray(c.catalogs)) c.catalogs = DEFAULT_CONFIG.catalogs.map(x => ({ ...x }));
-      for (const cat of c.catalogs) {
-        if (cat.intro === undefined) cat.intro = '';
-        if (!Array.isArray(cat.products)) cat.products = [];
-        for (const p of cat.products) {
-          if (p.stock === undefined) p.stock = -1;
-        }
-      }
+      normalizeCatalogProducts(c.catalogs);
       if (c.botBanner === undefined) c.botBanner = '';
       if (!Array.isArray(c.pins)) c.pins = [];
       if (!Array.isArray(c.targets)) c.targets = [];
@@ -199,6 +211,7 @@ async function loadCloudState(force = false) {
     if (!b64) return;
     const stateData = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
     if (stateData && Array.isArray(stateData.catalogs)) {
+      normalizeCatalogProducts(stateData.catalogs);
       cfg.catalogs = stateData.catalogs;
       if (Array.isArray(stateData.pins)) cfg.pins = stateData.pins;
       if (Array.isArray(stateData.targets)) cfg.targets = stateData.targets;
@@ -1375,15 +1388,22 @@ function getRegisteredFakeSaleProducts() {
   const fsCfg = cfg.fakeSales || DEFAULT_FAKE_SALES;
   const catFilter = fsCfg.catalogFilter ? normName(fsCfg.catalogFilter) : '';
   const list = [];
+  const allList = [];
   for (const c of (cfg.catalogs || [])) {
-    if (catFilter && normName(c.name) !== catFilter) continue;
-    for (const p of (c.products || [])) {
-      if (p && p.name && String(p.name).trim()) {
-        list.push({ catalog: c.name, name: String(p.name).trim() });
+    if (!c || !Array.isArray(c.products)) continue;
+    for (const p of c.products) {
+      if (!p) continue;
+      const prodName = (p.name && String(p.name).trim()) ? String(p.name).trim() : String(c.name || '').trim();
+      if (prodName) {
+        const entry = { catalog: c.name, name: prodName };
+        allList.push(entry);
+        if (!catFilter || normName(c.name) === catFilter) {
+          list.push(entry);
+        }
       }
     }
   }
-  return list;
+  return list.length > 0 ? list : allList;
 }
 
 function computeBrokenDelaySec(minMin, maxMin) {
@@ -1548,7 +1568,7 @@ async function checkFakeSalesTimer() {
     const { catalog, name, price, description, stock } = req.body || {};
     const cat = getCatalog(catalog);
     if (!cat) return res.status(404).json({ error: 'catalog not found' });
-    const cleanName = String(name || '').trim().replace(/\s+/g, ' ');
+    const cleanName = String(name || cat.name || 'PRODUTO').trim().replace(/\s+/g, ' ');
     const existing = cat.products.find(p => normName(p.name) === normName(cleanName));
     if (existing) { existing.name = cleanName; existing.price = Number(price); existing.description = description || ''; if (stock !== undefined) existing.stock = Number(stock); }
     else cat.products.push({ name: cleanName, price: Number(price), description: description || '', stock: stock !== undefined ? Number(stock) : -1 });

@@ -856,6 +856,45 @@
       el.classList.remove('flex');
     }
 
+    function normalizeClientCatalogs(catalogs) {
+      if (!Array.isArray(catalogs)) return [];
+      for (const c of catalogs) {
+        if (!c || !Array.isArray(c.products)) continue;
+        for (const p of c.products) {
+          if (p && (!p.name || !String(p.name).trim())) {
+            p.name = String(c.name || 'Produto').trim();
+          }
+        }
+      }
+      return catalogs;
+    }
+
+    function getClientFakeSaleProducts(catalogFilter) {
+      const list = [];
+      const filterNorm = String(catalogFilter || '').trim().toLowerCase();
+      for (const c of (state.catalogs || [])) {
+        if (!c) continue;
+        const cName = String(c.name || '').trim();
+        if (filterNorm && cName.toLowerCase() !== filterNorm) continue;
+        for (const p of (c.products || [])) {
+          if (!p) continue;
+          const pName = String(p.name || cName || 'Produto').trim();
+          if (pName) {
+            list.push({
+              catalog: cName,
+              name: pName,
+              price: p.price,
+              imageUrl: p.imageUrl || p.proxyUrl || '',
+            });
+          }
+        }
+      }
+      if (list.length === 0 && filterNorm) {
+        return getClientFakeSaleProducts('');
+      }
+      return list;
+    }
+
     async function refresh() {
       try {
         const todayNow = getTodayBRT();
@@ -867,12 +906,12 @@
         updateDayPickerUI();
         const q = '?date=' + encodeURIComponent(selectedDate);
         state.status = await api('/api/status' + q);
-        state.catalogs = await api('/api/catalogs');
+        state.catalogs = normalizeClientCatalogs(await api('/api/catalogs'));
         state.orders = await api('/api/orders' + q);
         state.targets = await api('/api/targets');
         state.pins = await api('/api/pins');
-        state.fakeSales = await api('/api/fakesales');
-        const fetchedChannels = await api('/api/channels');
+        state.fakeSales = await api('/api/fakesales').catch(() => state.fakeSales);
+        const fetchedChannels = await api('/api/channels').catch(() => FALLBACK_CHANNELS);
         state.channels = (Array.isArray(fetchedChannels) && fetchedChannels.length > 0) ? fetchedChannels : FALLBACK_CHANNELS;
       } catch (e) {
         console.error(e);
@@ -1168,11 +1207,13 @@
       const fs = state.fakeSales;
       const el = document.getElementById('fsCountdown');
       if (!el || !fs) return;
+      const clientProds = getClientFakeSaleProducts(fs.catalogFilter);
+      const prodCount = Math.max(Number(fs.registeredProductsCount) || 0, clientProds.length);
       if (!fs.enabled) {
         el.textContent = 'Automação desligada';
         return;
       }
-      if (!fs.registeredProductsCount || fs.registeredProductsCount <= 0) {
+      if (prodCount <= 0) {
         el.textContent = 'Aguardando cadastro de produtos (0 cadastrados)';
         return;
       }
@@ -1192,6 +1233,11 @@
 
     function renderFakeSales(force = false) {
       const fs = state.fakeSales || { enabled: false, channelId: '', catalogFilter: '', minMinutes: 2, maxMinutes: 7, registeredProductsCount: 0, registeredProducts: [], history: [] };
+      const clientProds = getClientFakeSaleProducts(fs.catalogFilter);
+      const effectiveProds = (Array.isArray(fs.registeredProducts) && fs.registeredProducts.length > 0)
+        ? fs.registeredProducts
+        : clientProds;
+      const effectiveCount = effectiveProds.length;
       const viewEl = document.getElementById('view-fakesales');
       const isEditing = !force && viewEl && document.activeElement && viewEl.contains(document.activeElement) && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT');
 
@@ -1214,9 +1260,9 @@
 
       const statusBadge = document.getElementById('fsStatusBadge');
       if (statusBadge) {
-        if (fs.enabled && fs.registeredProductsCount > 0) {
+        if (fs.enabled && effectiveCount > 0) {
           statusBadge.innerHTML = '<span class="badge badge-paid"><i class="fa-solid fa-circle-play mr-1"></i>ATIVO — TEMPO QUEBRADO</span>';
-        } else if (fs.enabled && (!fs.registeredProductsCount || fs.registeredProductsCount <= 0)) {
+        } else if (fs.enabled && effectiveCount <= 0) {
           statusBadge.innerHTML = '<span class="badge badge-pending"><i class="fa-solid fa-triangle-exclamation mr-1"></i>PAUSADO (SEM PRODUTOS)</span>';
         } else {
           statusBadge.innerHTML = '<span class="badge badge-cancelled"><i class="fa-solid fa-circle-stop mr-1"></i>DESATIVADO</span>';
@@ -1237,7 +1283,7 @@
       }
 
       const prodCountEl = document.getElementById('fsProdCount');
-      if (prodCountEl) prodCountEl.textContent = String(fs.registeredProductsCount || 0);
+      if (prodCountEl) prodCountEl.textContent = String(effectiveCount);
 
       const totalSentEl = document.getElementById('fsTotalSent');
       if (totalSentEl) totalSentEl.textContent = String(fs.totalSent || 0);
@@ -1251,7 +1297,7 @@
 
       const eligEl = document.getElementById('fsEligibleList');
       if (eligEl) {
-        const list = fs.registeredProducts || [];
+        const list = effectiveProds;
         if (list.length === 0) {
           eligEl.innerHTML = '<div class="text-xs p-3 rounded-lg w-full" style="background:rgba(239,68,68,0.12); color:#f87171; border:1px solid rgba(239,68,68,0.3);"><i class="fa-solid fa-ban mr-1"></i>Nenhum produto cadastrado! Enquanto não houver produtos cadastrados, nenhuma mensagem será enviada.</div>';
         } else {
@@ -1545,12 +1591,14 @@
 
     async function saveProduct() {
       try {
+        const catVal = document.getElementById('pCatalog').value;
+        const nameVal = document.getElementById('pName').value.trim() || catVal;
         await api('/api/products', {
           method: 'POST',
           body: {
-            catalog: document.getElementById('pCatalog').value,
-            name: document.getElementById('pName').value,
-            price: parseFloat(document.getElementById('pPrice').value),
+            catalog: catVal,
+            name: nameVal,
+            price: parseFloat(document.getElementById('pPrice').value) || 0,
             description: document.getElementById('pDesc').value,
             stock: parseInt(document.getElementById('pStock').value),
           },
