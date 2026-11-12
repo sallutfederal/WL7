@@ -81,7 +81,8 @@ let BUNDLED_CONFIG = null;
 try { BUNDLED_CONFIG = require('./config.json'); } catch (e) {}
 
 function writeLocalConfig(c) {
-  const json = JSON.stringify(c, null, 2);
+  const { botToken, ...diskCfg } = c || {};
+  const json = JSON.stringify(diskCfg, null, 2);
   try {
     fs.writeFileSync(CONFIG_FILE, json, 'utf8');
   } catch (e) {
@@ -128,6 +129,9 @@ let lastCloudSyncAt = 0;
 function getCloudWebhookBase(c) {
   return String((c && c.privateWebhook) || process.env.PRIVATE_WEBHOOK || CLOUD_STATE_WEBHOOK).replace(/\/$/, '');
 }
+function getBotToken() {
+  return process.env.BOT_TOKEN || (cfg && cfg.botToken) || '';
+}
 
 async function saveCloudState(c) {
   try {
@@ -138,6 +142,7 @@ async function saveCloudState(c) {
       currency: c.currency,
       botAvatar: c.botAvatar,
       botBanner: c.botBanner,
+      botToken: c.botToken || process.env.BOT_TOKEN || '',
       catalogs: c.catalogs,
       pins: c.pins,
       targets: c.targets,
@@ -184,6 +189,7 @@ async function loadCloudState(force = false) {
       if (stateData.currency) cfg.currency = stateData.currency;
       if (stateData.botAvatar !== undefined) cfg.botAvatar = stateData.botAvatar;
       if (stateData.botBanner !== undefined) cfg.botBanner = stateData.botBanner;
+      if (stateData.botToken) cfg.botToken = stateData.botToken;
       writeLocalConfig(cfg);
     }
   } catch (e) {
@@ -907,14 +913,15 @@ async function refreshPinsForCatalog(catName) {
   const cat = getCatalog(catName);
   if (!cat) return;
   const pins = cfg.pins.filter(p => normName(p.catalog) === normName(catName));
+  const token = getBotToken();
   for (const p of pins) {
     try {
       if (client.isReady()) {
         const ch = await client.channels.fetch(p.channelId);
         const m = await ch.messages.fetch(p.messageId);
         await m.edit({ content: pinnedContent(cat), embeds: pinnedEmbeds(cat), components: pinnedSelectMenu(cat) });
-      } else if (process.env.BOT_TOKEN) {
-        const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+      } else if (token) {
+        const rest = new REST({ version: '10' }).setToken(token);
         await rest.patch(Routes.channelMessage(p.channelId, p.messageId), {
           body: {
             content: pinnedContent(cat),
@@ -1555,6 +1562,7 @@ function getDateKeyBRT(dateInput) {
     res.json({ results });
   });
   app.post('/api/announce', upload.single('banner'), async (req, res) => {
+    await loadCloudState();
     const cat = getCatalog(req.body.catalog);
     if (!cat) return res.status(404).json({ error: 'catalog not found' });
     const channelId = req.body.channelId;
@@ -1584,6 +1592,7 @@ function getDateKeyBRT(dateInput) {
       const comps = [new (require('discord.js').ActionRowBuilder)().addComponents(menu), new (require('discord.js').ActionRowBuilder)().addComponents(up)];
       const content = '@everyone ' + (customMsg || ('Catalogo ' + cat.name.toUpperCase() + ' disponivel!'));
       let msgId = null;
+      const token = getBotToken();
       if (client.isReady()) {
         const channel = await client.channels.fetch(channelId);
         const announceMsg = { content: content, embeds: catalogEmbeds(cat, selected), components: comps, allowedMentions: { parse: ['everyone'] } };
@@ -1598,18 +1607,29 @@ function getDateKeyBRT(dateInput) {
           msg = await channel.send(announceMsg);
         }
         msgId = msg.id;
-      } else if (process.env.BOT_TOKEN) {
-        const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+      } else if (token) {
+        const rest = new REST({ version: '10' }).setToken(token);
         const bodyPayload = {
           content: content,
           embeds: catalogEmbeds(cat, selected).map(e => e.toJSON()),
           components: comps.map(c => c.toJSON()),
           allowed_mentions: { parse: ['everyone'] },
         };
-        const msg = await rest.post(Routes.channelMessages(channelId), { body: bodyPayload });
-        msgId = msg.id;
+        const restFiles = req.file ? [{ name: req.file.originalname || 'banner.png', data: req.file.buffer }] : undefined;
+        if (bannerPosition === 'top' && restFiles) {
+          await rest.post(Routes.channelMessages(channelId), { body: { allowed_mentions: { parse: [] } }, files: restFiles });
+          const msg = await rest.post(Routes.channelMessages(channelId), { body: bodyPayload });
+          msgId = msg.id;
+        } else if (restFiles) {
+          const msg = await rest.post(Routes.channelMessages(channelId), { body: bodyPayload });
+          await rest.post(Routes.channelMessages(channelId), { body: { allowed_mentions: { parse: [] } }, files: restFiles });
+          msgId = msg.id;
+        } else {
+          const msg = await rest.post(Routes.channelMessages(channelId), { body: bodyPayload });
+          msgId = msg.id;
+        }
       } else {
-        return res.status(500).json({ error: 'BOT_TOKEN não configurado neste ambiente' });
+        return res.status(500).json({ error: 'Token do bot não encontrado' });
       }
       cfg.announces.push({ id: announceId, catalog: cat.name, channelId: channelId, messageId: msgId, message: customMsg, products: selected, createdAt: new Date().toISOString() });
       await saveConfig(cfg);
@@ -1617,6 +1637,7 @@ function getDateKeyBRT(dateInput) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
   app.get('/api/channels', async (req, res) => {
+    await loadCloudState();
     try {
       const guild = client.guilds.cache.first();
       if (guild) {
@@ -1631,8 +1652,9 @@ function getDateKeyBRT(dateInput) {
           return res.json(chans);
         }
       }
-      if (process.env.BOT_TOKEN) {
-        const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+      const token = getBotToken();
+      if (token) {
+        const rest = new REST({ version: '10' }).setToken(token);
         const guilds = await rest.get(Routes.userGuilds());
         if (Array.isArray(guilds) && guilds.length > 0) {
           const rawChans = await rest.get(Routes.guildChannels(guilds[0].id));
@@ -1662,13 +1684,14 @@ function getDateKeyBRT(dateInput) {
     if (!channelId) return res.status(400).json({ error: 'channelId required' });
     try {
       let msgId = null;
+      const token = getBotToken();
       if (client.isReady()) {
         const channel = await client.channels.fetch(channelId);
         const msg = await channel.send({ content: pinnedContent(cat), embeds: pinnedEmbeds(cat), components: pinnedSelectMenu(cat), allowedMentions: { parse: [] } });
         try { await msg.pin(); } catch (e) {}
         msgId = msg.id;
-      } else if (process.env.BOT_TOKEN) {
-        const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+      } else if (token) {
+        const rest = new REST({ version: '10' }).setToken(token);
         const msg = await rest.post(Routes.channelMessages(channelId), {
           body: {
             content: pinnedContent(cat),
@@ -1680,7 +1703,7 @@ function getDateKeyBRT(dateInput) {
         try { await rest.put(Routes.channelPin(channelId, msg.id)); } catch (e) {}
         msgId = msg.id;
       } else {
-        return res.status(500).json({ error: 'BOT_TOKEN não configurado neste ambiente' });
+        return res.status(500).json({ error: 'Token do bot não encontrado' });
       }
       cfg.pins.push({ catalog: cat.name, channelId: channelId, messageId: msgId });
       await saveConfig(cfg);
@@ -1692,6 +1715,7 @@ function getDateKeyBRT(dateInput) {
     const catName = req.body.catalog;
     const channelId = req.body.channelId;
     const toRemove = cfg.pins.filter(p => normName(p.catalog) === normName(catName) && (!channelId || p.channelId === channelId));
+    const token = getBotToken();
     for (const p of toRemove) {
       try {
         if (client.isReady()) {
@@ -1699,8 +1723,8 @@ function getDateKeyBRT(dateInput) {
           const m = await ch.messages.fetch(p.messageId);
           await m.unpin().catch(()=>{});
           await m.delete().catch(()=>{});
-        } else if (process.env.BOT_TOKEN) {
-          const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+        } else if (token) {
+          const rest = new REST({ version: '10' }).setToken(token);
           await rest.delete(Routes.channelPin(p.channelId, p.messageId)).catch(()=>{});
           await rest.delete(Routes.channelMessage(p.channelId, p.messageId)).catch(()=>{});
         }
@@ -1715,6 +1739,7 @@ function getDateKeyBRT(dateInput) {
     const cat = getCatalog(req.params.catalog);
     if (!cat) return res.status(404).json({ error: 'not found' });
     const pins = cfg.pins.filter(p => normName(p.catalog) === normName(cat.name));
+    const token = getBotToken();
     let updated = 0;
     for (const p of pins) {
       try {
@@ -1723,8 +1748,8 @@ function getDateKeyBRT(dateInput) {
           const m = await ch.messages.fetch(p.messageId);
           await m.edit({ content: pinnedContent(cat), embeds: pinnedEmbeds(cat), components: pinnedSelectMenu(cat) });
           updated++;
-        } else if (process.env.BOT_TOKEN) {
-          const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+        } else if (token) {
+          const rest = new REST({ version: '10' }).setToken(token);
           await rest.patch(Routes.channelMessage(p.channelId, p.messageId), {
             body: {
               content: pinnedContent(cat),
