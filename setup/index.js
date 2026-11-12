@@ -298,6 +298,52 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds], partials: [Part
 
 function money(v) { return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: cfg.currency || 'BRL' }); }
 function getCatalog(name) { return cfg.catalogs.find(c => normName(c.name) === normName(name)); }
+function getProductDiscordImageUrl(p) {
+  if (!p || !p.imageUrl) return null;
+  const dims = {
+    small: { w: 180, h: 100 },
+    medium: { w: 360, h: 200 },
+    large: { w: 640, h: 360 },
+    full: { w: 960, h: 540 },
+  };
+  const d = dims[p.imageSize || 'medium'] || dims.medium;
+  try {
+    let raw = p.proxyUrl || p.imageUrl;
+    if (raw.includes('cdn.discordapp.com/')) {
+      raw = raw.replace('cdn.discordapp.com/', 'media.discordapp.net/');
+    }
+    if (raw.includes('media.discordapp.net/')) {
+      const u = new URL(raw);
+      u.searchParams.set('width', String(d.w));
+      u.searchParams.set('height', String(d.h));
+      return u.toString();
+    }
+    return p.imageUrl;
+  } catch (e) {
+    return p.imageUrl;
+  }
+}
+
+function productCardEmbed(cat, p) {
+  const e = new EmbedBuilder()
+    .setTitle('🛒 ' + p.name + ' — ' + money(p.price))
+    .setColor(0xd4af37);
+  const descParts = [];
+  if (p.description) descParts.push(p.description);
+  descParts.push('📦 **Estoque:** ' + (p.stock === -1 ? '∞ Ilimitado' : p.stock));
+  e.setDescription(descParts.join('\n'));
+  e.setFooter({ text: 'Catálogo: ' + cat.name.toUpperCase() });
+  const imgUrl = getProductDiscordImageUrl(p);
+  if (imgUrl) {
+    if ((p.imageSize || 'medium') === 'small') {
+      e.setThumbnail(imgUrl);
+    } else {
+      e.setImage(imgUrl);
+    }
+  }
+  return e;
+}
+
 function catalogEmbed(cat) {
   const e = new EmbedBuilder().setTitle('Catalogo ' + cat.name.toUpperCase()).setColor(0x57f287).setTimestamp();
   if (!cat.products || cat.products.length === 0) { e.setDescription('Nenhum produto cadastrado.'); return e; }
@@ -307,12 +353,31 @@ function catalogEmbed(cat) {
   if (cfg.botAvatar) e.setThumbnail(cfg.botAvatar);
   return e;
 }
+
+function catalogEmbeds(cat, selectedNames = null) {
+  const main = catalogEmbed(cat);
+  const prods = (cat.products || []).filter(p => p && p.imageUrl && (!selectedNames || selectedNames.some(n => normName(n) === normName(p.name))));
+  const cards = prods.slice(0, 9).map(p => productCardEmbed(cat, p));
+  return [main, ...cards];
+}
+
+function pinnedEmbeds(cat) {
+  const prods = (cat.products || []).filter(p => p && p.imageUrl);
+  return prods.slice(0, 10).map(p => productCardEmbed(cat, p));
+}
+
 function productDetailEmbed(cat, p) {
   const e = new EmbedBuilder().setTitle(p.name).setColor(0x5865f2).setTimestamp();
   e.addFields({ name: 'Preco', value: money(p.price), inline: true }, { name: 'Estoque', value: String(p.stock === -1 ? 'Ilimitado' : p.stock), inline: true });
   if (p.description) e.setDescription(p.description);
   e.setFooter({ text: 'Catalogo: ' + cat.name });
-  if (cfg.botAvatar) e.setThumbnail(cfg.botAvatar);
+  const imgUrl = getProductDiscordImageUrl(p);
+  if (imgUrl) {
+    if ((p.imageSize || 'medium') === 'small') e.setThumbnail(imgUrl);
+    else e.setImage(imgUrl);
+  } else if (cfg.botAvatar) {
+    e.setThumbnail(cfg.botAvatar);
+  }
   return e;
 }
 function catalogsOverviewEmbed() {
@@ -643,7 +708,7 @@ async function handle(interaction) {
         if (catName) {
           const cat = getCatalog(catName);
           if (!cat) return interaction.reply({ content: 'Catalogo nao encontrado.', ephemeral: true });
-          return interaction.reply({ embeds: [catalogEmbed(cat)], ephemeral: true });
+          return interaction.reply({ embeds: catalogEmbeds(cat), ephemeral: true });
         }
         const embeds = cfg.catalogs.map(catalogEmbed);
         return interaction.reply({ embeds: embeds.slice(0, 10), ephemeral: true });
@@ -709,10 +774,10 @@ async function handle(interaction) {
         if (!cat) return interaction.reply({ content: 'Catalogo nao encontrado.', ephemeral: true });
         const channel = interaction.options.getChannel('canal');
         await interaction.deferReply({ ephemeral: true });
-        const msg = await channel.send({ content: pinnedContent(cat), embeds: [], components: pinnedSelectMenu(cat), allowedMentions: { parse: [] } });
+        const msg = await channel.send({ content: pinnedContent(cat), embeds: pinnedEmbeds(cat), components: pinnedSelectMenu(cat), allowedMentions: { parse: [] } });
         try { await msg.pin(); } catch (e) { console.error('pin err', e.message); }
         cfg.pins.push({ catalog: cat.name, channelId: channel.id, messageId: msg.id });
-        saveConfig(cfg);
+        await saveConfig(cfg);
         await notifyPrivate('Mensagem fixa criada: ' + cat.name + ' em #' + (channel.name || channel.id));
         return interaction.editReply({ content: 'Mensagem fixa criada em ' + channel + '.' });
       }
@@ -721,7 +786,7 @@ async function handle(interaction) {
         if (!cat) return interaction.reply({ content: 'Catalogo nao encontrado.', ephemeral: true });
         const channel = interaction.options.getChannel('canal');
         let removed = 0;
-        const toRemove = cfg.pins.filter(p => p.catalog.toLowerCase() === cat.name.toLowerCase() && (!channel || p.channelId === channel.id));
+        const toRemove = cfg.pins.filter(p => normName(p.catalog) === normName(cat.name) && (!channel || p.channelId === channel.id));
         for (const p of toRemove) {
           try {
             const ch = await client.channels.fetch(p.channelId);
@@ -732,20 +797,20 @@ async function handle(interaction) {
           } catch (e) { console.error('unpin err', e.message); }
         }
         cfg.pins = cfg.pins.filter(p => !toRemove.includes(p));
-        saveConfig(cfg);
+        await saveConfig(cfg);
         return interaction.reply({ content: removed + ' mensagem(ns) removida(s).', ephemeral: true });
       }
       case 'refreshpin': {
         const cat = getCatalog(interaction.options.getString('catalogo'));
         if (!cat) return interaction.reply({ content: 'Catalogo nao encontrado.', ephemeral: true });
         await interaction.deferReply({ ephemeral: true });
-        const pins = cfg.pins.filter(p => p.catalog.toLowerCase() === cat.name.toLowerCase());
+        const pins = cfg.pins.filter(p => normName(p.catalog) === normName(cat.name));
         let updated = 0;
         for (const p of pins) {
           try {
             const ch = await client.channels.fetch(p.channelId);
             const m = await ch.messages.fetch(p.messageId);
-            await m.edit({ content: pinnedContent(cat), components: pinnedSelectMenu(cat) });
+            await m.edit({ content: pinnedContent(cat), embeds: pinnedEmbeds(cat), components: pinnedSelectMenu(cat) });
             updated++;
           } catch (e) { console.error('refresh err', e.message); }
         }
@@ -769,10 +834,10 @@ async function handle(interaction) {
         const up = new (require('discord.js').ButtonBuilder)().setCustomId('announce:up:' + announceId).setLabel('Voltar').setStyle(2).setEmoji('⬆️');
         const comps = [new (require('discord.js').ActionRowBuilder)().addComponents(menu), new (require('discord.js').ActionRowBuilder)().addComponents(up)];
         const content = '@everyone ' + (customMsg || ('Catalogo ' + cat.name.toUpperCase() + ' disponivel!'));
-        const announceMsg = { content: content, embeds: [catalogEmbed(cat)], components: comps, allowedMentions: { parse: ['everyone'] } };
+        const announceMsg = { content: content, embeds: catalogEmbeds(cat, selected), components: comps, allowedMentions: { parse: ['everyone'] } };
         const msg = await channel.send(announceMsg);
         cfg.announces.push({ id: announceId, catalog: cat.name, channelId: channel.id, messageId: msg.id, message: customMsg, products: selected, createdAt: new Date().toISOString() });
-        saveConfig(cfg);
+        await saveConfig(cfg);
         await notifyPrivate('Anuncio enviado: ' + cat.name + ' em #' + (channel.name || channel.id));
         return interaction.reply({ content: 'Anunciado em ' + channel + '.', ephemeral: true });
       }
@@ -841,12 +906,23 @@ async function handle(interaction) {
 async function refreshPinsForCatalog(catName) {
   const cat = getCatalog(catName);
   if (!cat) return;
-  const pins = cfg.pins.filter(p => p.catalog.toLowerCase() === catName.toLowerCase());
+  const pins = cfg.pins.filter(p => normName(p.catalog) === normName(catName));
   for (const p of pins) {
     try {
-      const ch = await client.channels.fetch(p.channelId);
-      const m = await ch.messages.fetch(p.messageId);
-      await m.edit({ content: pinnedContent(cat), components: pinnedSelectMenu(cat) });
+      if (client.isReady()) {
+        const ch = await client.channels.fetch(p.channelId);
+        const m = await ch.messages.fetch(p.messageId);
+        await m.edit({ content: pinnedContent(cat), embeds: pinnedEmbeds(cat), components: pinnedSelectMenu(cat) });
+      } else if (process.env.BOT_TOKEN) {
+        const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+        await rest.patch(Routes.channelMessage(p.channelId, p.messageId), {
+          body: {
+            content: pinnedContent(cat),
+            embeds: pinnedEmbeds(cat).map(e => e.toJSON()),
+            components: pinnedSelectMenu(cat).map(c => c.toJSON()),
+          },
+        });
+      }
     } catch (e) { console.error('refresh err', e.message); }
   }
 }
@@ -896,7 +972,7 @@ async function generateCharge(interaction, cat, p) {
     };
     cfg.orders.push(order);
     if (p.stock > 0) p.stock -= 1;
-    saveConfig(cfg);
+    await saveConfig(cfg);
     await refreshPinsForCatalog(cat.name);
 
     const embed = new EmbedBuilder()
@@ -926,9 +1002,10 @@ async function generateCharge(interaction, cat, p) {
       new ButtonBuilder().setCustomId('pix:cancel:' + order.id).setLabel('Cancelar').setStyle(ButtonStyle.Danger).setEmoji('✖️')
     );
 
+    const replyEmbeds = p.imageUrl ? [productCardEmbed(cat, p), embed] : [embed];
     await interaction.editReply({
       content: '**Pedido #' + order.id + '** gerado! Copie o código PIX abaixo ou escaneie o QR Code:',
-      embeds: [embed],
+      embeds: replyEmbeds,
       files: files,
       components: [row],
     });
@@ -945,7 +1022,7 @@ async function processPaymentUpdate(order, newStatus) {
   if (newStatus === 'completed' || newStatus === 'paid' || newStatus === 'approved') {
     order.status = 'paid';
     order.paidAt = new Date().toISOString();
-    saveConfig(cfg);
+    saveConfig(cfg, false);
     try {
       const user = await client.users.fetch(order.userId);
       await user.send('✅ **Pagamento confirmado!**\nPedido **#' + order.id + '** — **' + order.product + '** (' + money(order.amount) + ')').catch(() => {});
@@ -956,10 +1033,10 @@ async function processPaymentUpdate(order, newStatus) {
     if (order.status !== newStatus) {
       order.status = newStatus;
       for (const cat of cfg.catalogs) {
-        const prod = (cat.products || []).find(p => p.name === order.product);
+        const prod = (cat.products || []).find(p => normName(p.name) === normName(order.product));
         if (prod && prod.stock !== -1) prod.stock += 1;
       }
-      saveConfig(cfg);
+      await saveConfig(cfg);
     }
   }
   return false;
@@ -971,14 +1048,14 @@ async function handleComponent(interaction) {
       if (interaction.customId === 'browse:catalog') {
         const cat = getCatalog(interaction.values[0]);
         if (!cat) return interaction.update({ content: 'Catalogo nao encontrado.', components: [] });
-        return interaction.update({ embeds: [catalogEmbed(cat)], components: browseUpComponents(cat) });
+        return interaction.update({ embeds: catalogEmbeds(cat), components: browseUpComponents(cat) });
       }
       if (interaction.customId.startsWith('browse:buy:')) {
         const catName = interaction.customId.slice('browse:buy:'.length);
         const cat = getCatalog(catName);
         if (!cat) return interaction.reply({ content: 'Catalogo nao encontrado.', ephemeral: true });
         const val = interaction.values[0];
-        const p = cat.products.find(x => x.name === val);
+        const p = cat.products.find(x => normName(x.name) === normName(val));
         if (!p) return interaction.reply({ content: 'Produto nao encontrado.', ephemeral: true });
         return await generateCharge(interaction, cat, p);
       }
@@ -991,12 +1068,12 @@ async function handleComponent(interaction) {
         const cat = getCatalog(catName);
         if (!cat) return interaction.reply({ content: 'Catalogo nao encontrado.', ephemeral: true });
         const val = interaction.values[0];
-        if (val === '__none__') return interaction.update({ content: pinnedContent(cat), components: pinnedSelectMenu(cat) });
-        const p = cat.products.find(x => x.name === val);
-        if (!p) return interaction.update({ content: pinnedContent(cat), components: pinnedSelectMenu(cat) });
+        if (val === '__none__') return interaction.update({ content: pinnedContent(cat), embeds: pinnedEmbeds(cat), components: pinnedSelectMenu(cat) });
+        const p = cat.products.find(x => normName(x.name) === normName(val));
+        if (!p) return interaction.update({ content: pinnedContent(cat), embeds: pinnedEmbeds(cat), components: pinnedSelectMenu(cat) });
         await interaction.deferReply({ ephemeral: true });
         if (interaction.message) {
-          interaction.message.edit({ content: pinnedContent(cat), components: pinnedSelectMenu(cat) }).catch(() => {});
+          interaction.message.edit({ content: pinnedContent(cat), embeds: pinnedEmbeds(cat), components: pinnedSelectMenu(cat) }).catch(() => {});
         }
         return await generateCharge(interaction, cat, p);
       }
@@ -1007,7 +1084,7 @@ async function handleComponent(interaction) {
         if (!cat) return interaction.reply({ content: 'Catalogo nao encontrado.', ephemeral: true });
         const val = interaction.values[0];
         if (val === '__none__') return interaction.deferUpdate();
-        const p = cat.products.find(x => x.name === val);
+        const p = cat.products.find(x => normName(x.name) === normName(val));
         if (!p) return interaction.reply({ content: 'Produto nao encontrado.', ephemeral: true });
         await interaction.deferReply({ ephemeral: true });
         if (interaction.message) {
@@ -1062,7 +1139,7 @@ async function handleComponent(interaction) {
       const catName = interaction.customId.slice('pin:up:'.length);
       const cat = getCatalog(catName);
       if (!cat) return interaction.update({ content: 'Catalogo nao encontrado.', components: [] });
-      return interaction.update({ content: pinnedContent(cat), embeds: [], components: pinnedSelectMenu(cat) });
+      return interaction.update({ content: pinnedContent(cat), embeds: pinnedEmbeds(cat), components: pinnedSelectMenu(cat) });
     }
     if (interaction.isButton() && interaction.customId.startsWith('announce:up:')) {
       const announceId = parseInt(interaction.customId.slice('announce:up:'.length));
@@ -1074,7 +1151,7 @@ async function handleComponent(interaction) {
       const menu = new (require('discord.js').StringSelectMenuBuilder)().setCustomId('announce:select:'+announceId).setPlaceholder('Escolha um produto').addOptions(opts);
       const up = new (require('discord.js').ButtonBuilder)().setCustomId('announce:up:'+announceId).setLabel('Voltar').setStyle(2).setEmoji('⬆️');
       const comps = [new (require('discord.js').ActionRowBuilder)().addComponents(menu), new (require('discord.js').ActionRowBuilder)().addComponents(up)];
-      return interaction.update({ content: '@everyone ' + (ann.message || ('Catalogo ' + cat.name.toUpperCase() + ' disponivel!')), embeds: [catalogEmbed(cat)], components: comps, allowedMentions: { parse: [] } });
+      return interaction.update({ content: '@everyone ' + (ann.message || ('Catalogo ' + cat.name.toUpperCase() + ' disponivel!')), embeds: catalogEmbeds(cat, ann.products), components: comps, allowedMentions: { parse: [] } });
     }
     if (interaction.isButton() && interaction.customId === 'browse:up') {
       return interaction.update({ embeds: [catalogsOverviewEmbed()], components: browseCatalogComponents() });
@@ -1359,6 +1436,64 @@ function getDateKeyBRT(dateInput) {
     refreshPinsForCatalog(cat.name).catch(()=>{});
     res.json({ ok: true });
   });
+  app.post('/api/products/:catalog/:name/photo', upload.single('photo'), async (req, res) => {
+    await loadCloudState();
+    const cat = getCatalog(req.params.catalog);
+    if (!cat) return res.status(404).json({ error: 'Catálogo não encontrado' });
+    const p = cat.products.find(x => normName(x.name) === normName(req.params.name));
+    if (!p) return res.status(404).json({ error: 'Produto não encontrado' });
+    try {
+      const requestedSize = (req.body && req.body.imageSize) || p.imageSize || 'medium';
+      p.imageSize = ['small', 'medium', 'large', 'full'].includes(requestedSize) ? requestedSize : 'medium';
+      const directUrl = req.body && req.body.imageUrl ? String(req.body.imageUrl).trim() : '';
+
+      if (req.file && req.file.buffer) {
+        const whBase = getCloudWebhookBase(cfg);
+        if (!whBase) return res.status(500).json({ error: 'Webhook para upload não configurado' });
+        const ext = ((req.file.originalname && req.file.originalname.split('.').pop()) || 'png').replace(/[^a-zA-Z0-9]/g, '') || 'png';
+        const fd = new FormData();
+        fd.append('payload_json', JSON.stringify({
+          content: '🖼️ Foto atualizada: **' + p.name + '** (' + cat.name + ') — tamanho: `' + p.imageSize + '`',
+        }));
+        fd.append('files[0]', new Blob([req.file.buffer], { type: req.file.mimetype || 'image/png' }), 'prod_' + Date.now() + '.' + ext);
+        const upRes = await fetch(whBase + '?wait=true', { method: 'POST', body: fd });
+        if (!upRes.ok) {
+          throw new Error('Falha no upload da imagem (' + upRes.status + ')');
+        }
+        const upJson = await upRes.json();
+        const att = upJson && upJson.attachments && upJson.attachments[0];
+        if (!att || !att.url) {
+          throw new Error('URL da imagem não retornada pelo servidor');
+        }
+        p.imageUrl = att.url;
+        p.proxyUrl = att.proxy_url || att.url;
+        p.photoMsgId = upJson.id;
+      } else if (directUrl) {
+        p.imageUrl = directUrl;
+        p.proxyUrl = directUrl;
+      }
+
+      await saveConfig(cfg);
+      await refreshPinsForCatalog(cat.name).catch(() => {});
+      res.json({ ok: true, imageUrl: p.imageUrl || '', proxyUrl: p.proxyUrl || '', imageSize: p.imageSize });
+    } catch (e) {
+      console.error('photo upload err:', e.message);
+      res.status(500).json({ error: e.message });
+    }
+  });
+  app.delete('/api/products/:catalog/:name/photo', async (req, res) => {
+    await loadCloudState();
+    const cat = getCatalog(req.params.catalog);
+    if (!cat) return res.status(404).json({ error: 'Catálogo não encontrado' });
+    const p = cat.products.find(x => normName(x.name) === normName(req.params.name));
+    if (!p) return res.status(404).json({ error: 'Produto não encontrado' });
+    delete p.imageUrl;
+    delete p.proxyUrl;
+    delete p.photoMsgId;
+    await saveConfig(cfg);
+    await refreshPinsForCatalog(cat.name).catch(() => {});
+    res.json({ ok: true });
+  });
   app.get('/api/orders', async (req, res) => {
     await syncOrdersFromPingo();
     const targetDate = req.query.date || getDateKeyBRT();
@@ -1451,7 +1586,7 @@ function getDateKeyBRT(dateInput) {
       let msgId = null;
       if (client.isReady()) {
         const channel = await client.channels.fetch(channelId);
-        const announceMsg = { content: content, embeds: [catalogEmbed(cat)], components: comps, allowedMentions: { parse: ['everyone'] } };
+        const announceMsg = { content: content, embeds: catalogEmbeds(cat, selected), components: comps, allowedMentions: { parse: ['everyone'] } };
         let msg;
         if (bannerPosition === 'top' && bannerFile) {
           await channel.send({ files: [bannerFile], allowedMentions: { parse: [] } });
@@ -1467,7 +1602,7 @@ function getDateKeyBRT(dateInput) {
         const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
         const bodyPayload = {
           content: content,
-          embeds: [catalogEmbed(cat).toJSON()],
+          embeds: catalogEmbeds(cat, selected).map(e => e.toJSON()),
           components: comps.map(c => c.toJSON()),
           allowed_mentions: { parse: ['everyone'] },
         };
@@ -1477,7 +1612,7 @@ function getDateKeyBRT(dateInput) {
         return res.status(500).json({ error: 'BOT_TOKEN não configurado neste ambiente' });
       }
       cfg.announces.push({ id: announceId, catalog: cat.name, channelId: channelId, messageId: msgId, message: customMsg, products: selected, createdAt: new Date().toISOString() });
-      saveConfig(cfg);
+      await saveConfig(cfg);
       res.json({ ok: true, id: announceId });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -1529,7 +1664,7 @@ function getDateKeyBRT(dateInput) {
       let msgId = null;
       if (client.isReady()) {
         const channel = await client.channels.fetch(channelId);
-        const msg = await channel.send({ content: pinnedContent(cat), embeds: [], components: pinnedSelectMenu(cat), allowedMentions: { parse: [] } });
+        const msg = await channel.send({ content: pinnedContent(cat), embeds: pinnedEmbeds(cat), components: pinnedSelectMenu(cat), allowedMentions: { parse: [] } });
         try { await msg.pin(); } catch (e) {}
         msgId = msg.id;
       } else if (process.env.BOT_TOKEN) {
@@ -1537,7 +1672,7 @@ function getDateKeyBRT(dateInput) {
         const msg = await rest.post(Routes.channelMessages(channelId), {
           body: {
             content: pinnedContent(cat),
-            embeds: [],
+            embeds: pinnedEmbeds(cat).map(e => e.toJSON()),
             components: pinnedSelectMenu(cat).map(c => c.toJSON()),
             allowed_mentions: { parse: [] },
           },
@@ -1586,13 +1721,14 @@ function getDateKeyBRT(dateInput) {
         if (client.isReady()) {
           const ch = await client.channels.fetch(p.channelId);
           const m = await ch.messages.fetch(p.messageId);
-          await m.edit({ content: pinnedContent(cat), components: pinnedSelectMenu(cat) });
+          await m.edit({ content: pinnedContent(cat), embeds: pinnedEmbeds(cat), components: pinnedSelectMenu(cat) });
           updated++;
         } else if (process.env.BOT_TOKEN) {
           const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
           await rest.patch(Routes.channelMessage(p.channelId, p.messageId), {
             body: {
               content: pinnedContent(cat),
+              embeds: pinnedEmbeds(cat).map(e => e.toJSON()),
               components: pinnedSelectMenu(cat).map(c => c.toJSON()),
             },
           });

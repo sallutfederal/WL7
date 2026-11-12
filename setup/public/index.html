@@ -217,6 +217,7 @@
       <a href="#" data-view="dashboard" class="nav-link active"><i class="fa-solid fa-chart-pie w-5 text-center"></i> Dashboard</a>
       <a href="#" data-view="catalogs" class="nav-link"><i class="fa-solid fa-box-archive w-5 text-center"></i> Catálogos</a>
       <a href="#" data-view="products" class="nav-link"><i class="fa-solid fa-cart-shopping w-5 text-center"></i> Produtos</a>
+      <a href="#" data-view="photos" class="nav-link"><i class="fa-solid fa-images w-5 text-center"></i> Fotos dos Produtos</a>
       <a href="#" data-view="orders" class="nav-link"><i class="fa-solid fa-receipt w-5 text-center"></i> Pedidos</a>
       <a href="#" data-view="pins" class="nav-link"><i class="fa-solid fa-thumbtack w-5 text-center"></i> Mensagens Fixas</a>
       <a href="#" data-view="bots" class="nav-link"><i class="fa-solid fa-robot w-5 text-center"></i> Bots / Webhooks</a>
@@ -306,6 +307,22 @@
           <button class="btn-gold" onclick="openProductModal()"><i class="fa-solid fa-plus"></i> Novo Produto</button>
         </div>
         <div class="card" id="productsTable"></div>
+      </section>
+
+      <!-- View: Product Photos -->
+      <section id="view-photos" class="view space-y-6">
+        <div class="flex flex-wrap justify-between items-center gap-4">
+          <div>
+            <p class="text-sm" style="color: var(--muted);">Faça upload de fotos individuais para cada produto de cada catálogo e escolha o tamanho que ficará atrás do nome do produto e nas mensagens do Discord.</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-sm" style="color: var(--muted);">Catálogo:</span>
+            <select id="filterPhotoCatalog" class="input" style="width: 220px;" onchange="renderPhotos(true)">
+              <option value="">Todos os Catálogos</option>
+            </select>
+          </div>
+        </div>
+        <div id="photosContainer" class="space-y-6"></div>
       </section>
 
       <!-- View: Orders -->
@@ -727,6 +744,7 @@
           dashboard: 'Dashboard',
           catalogs: 'Catálogos',
           products: 'Produtos',
+          photos: 'Fotos dos Produtos',
           orders: 'Pedidos',
           pins: 'Mensagens Fixas',
           bots: 'Bots / Webhooks',
@@ -776,6 +794,7 @@
       renderDashboard();
       renderCatalogs();
       renderProducts();
+      renderPhotos();
       renderOrders();
       renderPins();
       renderBots();
@@ -854,6 +873,36 @@
         '</tbody></table>';
     }
 
+    function getPhotoSizeStyle(size) {
+      const map = {
+        small:  { height: '48px', maxWidth: '210px', fontSize: '13px', label: 'Pequeno (48px • Miniatura)' },
+        medium: { height: '76px', maxWidth: '290px', fontSize: '15px', label: 'Médio (76px • Padrão)' },
+        large:  { height: '110px', maxWidth: '380px', fontSize: '17px', label: 'Grande (110px • Destaque)' },
+        full:   { height: '148px', maxWidth: '100%',  fontSize: '19px', label: 'Banner Completo (148px • Full)' },
+      };
+      return map[size] || map.medium;
+    }
+
+    function buildProductNameBannerHtml(p, showPlaceholder = false) {
+      const img = p.imageUrl || p.proxyUrl || '';
+      const sz = getPhotoSizeStyle(p.imageSize || 'medium');
+      if (!img && !showPlaceholder) {
+        return '<span class="font-semibold">' + esc(p.name) + '</span>';
+      }
+      const bgStyle = img
+        ? "background-image: linear-gradient(90deg, rgba(10,10,15,0.86) 0%, rgba(10,10,15,0.45) 55%, rgba(10,10,15,0.82) 100%), url('" + esc(img) + "'); background-size: cover; background-position: center;"
+        : 'background: linear-gradient(135deg, rgba(212,175,55,0.12), var(--bg3)); border-style: dashed;';
+      return (
+        '<div style="position:relative; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 16px; border-radius:12px; border:1px solid rgba(212,175,55,0.45); overflow:hidden; width:100%; height:' + sz.height + '; max-width:' + sz.maxWidth + '; ' + bgStyle + '">' +
+          '<div style="z-index:2; text-shadow: 0 2px 6px rgba(0,0,0,0.95);">' +
+            '<div style="font-weight:800; color:#fff; font-size:' + sz.fontSize + '; letter-spacing:0.4px;">' + esc(p.name) + '</div>' +
+            '<div style="font-size:11px; color:var(--accent2); font-weight:600;">' + money(p.price) + (img ? '' : ' • Sem foto') + '</div>' +
+          '</div>' +
+          (img ? '<span class="badge" style="z-index:2; background:rgba(0,0,0,0.65); color:var(--accent2); border:1px solid rgba(212,175,55,0.4); font-size:10px;">' + esc((p.imageSize || 'medium').toUpperCase()) + '</span>' : '') +
+        '</div>'
+      );
+    }
+
     function renderProducts() {
       const sel = document.getElementById('filterCatalog');
       const prev = sel.value;
@@ -871,12 +920,151 @@
         return;
       }
       el.innerHTML =
-        '<table class="table"><thead><tr><th>Catálogo</th><th>Nome</th><th>Preço</th><th>Estoque</th><th>Descrição</th><th>Ações</th></tr></thead><tbody>' +
+        '<table class="table"><thead><tr><th>Catálogo</th><th>Nome / Foto</th><th>Preço</th><th>Estoque</th><th>Descrição</th><th>Ações</th></tr></thead><tbody>' +
         rows.map(p =>
-          '<tr><td>' + esc(p.catalog) + '</td><td class="font-semibold">' + esc(p.name) + '</td><td>' + money(p.price) + '</td><td>' + (p.stock === -1 ? '∞ ilimitado' : esc(p.stock)) + '</td><td class="text-xs" style="color:var(--muted);">' + esc(p.description || '-') + '</td><td class="flex gap-2"><button class="btn-dark" onclick="editStock(\'' + esc(p.catalog) + '\',\'' + esc(p.name) + '\',' + Number(p.stock) + ')">Estoque</button><button class="btn-red" onclick="deleteProduct(\'' + esc(p.catalog) + '\',\'' + esc(p.name) + '\')">Excluir</button></td></tr>'
+          '<tr><td>' + esc(p.catalog) + '</td><td>' + buildProductNameBannerHtml(p, false) + '</td><td>' + money(p.price) + '</td><td>' + (p.stock === -1 ? '∞ ilimitado' : esc(p.stock)) + '</td><td class="text-xs" style="color:var(--muted);">' + esc(p.description || '-') + '</td><td class="flex gap-2 items-center"><button class="btn-dark" onclick="editStock(\'' + esc(p.catalog) + '\',\'' + esc(p.name) + '\',' + Number(p.stock) + ')">Estoque</button><button class="btn-red" onclick="deleteProduct(\'' + esc(p.catalog) + '\',\'' + esc(p.name) + '\')">Excluir</button></td></tr>'
         ).join('') +
         '</tbody></table>';
     }
+
+    function renderPhotos(force = false) {
+      const container = document.getElementById('photosContainer');
+      if (!force && container && document.activeElement && container.contains(document.activeElement)) {
+        return;
+      }
+      const sel = document.getElementById('filterPhotoCatalog');
+      if (!sel) return;
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">Todos os Catálogos</option>' + state.catalogs.map(c => '<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>').join('');
+      if (prev) sel.value = prev;
+      const filter = sel.value;
+      const cats = state.catalogs.filter(c => !filter || c.name === filter);
+      if (cats.length === 0) {
+        container.innerHTML = '<div class="card"><div class="empty">Nenhum catálogo encontrado</div></div>';
+        return;
+      }
+      let html = '';
+      cats.forEach((cat, cIdx) => {
+        const prods = cat.products || [];
+        html +=
+          '<div class="card space-y-4">' +
+            '<div class="flex items-center justify-between pb-3" style="border-bottom: 1px solid var(--border);">' +
+              '<div>' +
+                '<h3 class="text-lg font-bold" style="color: var(--accent2);"><i class="fa-solid fa-box-open mr-2"></i>Catálogo: ' + esc(cat.name.toUpperCase()) + '</h3>' +
+                '<p class="text-xs mt-1" style="color: var(--muted);">' + prods.length + ' produto(s) neste catálogo — configure a foto individual e o tamanho atrás do nome para cada um</p>' +
+              '</div>' +
+            '</div>';
+        if (prods.length === 0) {
+          html += '<div class="empty">Nenhum produto cadastrado neste catálogo</div>';
+        } else {
+          html += '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">';
+          prods.forEach((p, pIdx) => {
+            const key = 'ph_' + cIdx + '_' + pIdx;
+            const curSize = p.imageSize || 'medium';
+            const hasPhoto = Boolean(p.imageUrl);
+            html +=
+              '<div class="p-4 rounded-xl space-y-3" style="background: var(--bg3); border: 1px solid var(--border);">' +
+                '<div class="flex items-center justify-between gap-2">' +
+                  '<div class="text-xs uppercase tracking-wider font-semibold" style="color: var(--muted);">Prévia atrás do nome (Painel &amp; Discord)</div>' +
+                  (hasPhoto
+                    ? '<span class="badge badge-paid">Com Foto</span>'
+                    : '<span class="badge badge-pending">Sem Foto</span>') +
+                '</div>' +
+                buildProductNameBannerHtml(p, true) +
+                '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">' +
+                  '<div>' +
+                    '<label class="block text-xs uppercase mb-1" style="color: var(--muted);">Tamanho atrás do nome / Discord</label>' +
+                    '<select id="size_' + key + '" class="input text-xs" onchange="saveProductPhoto(\'' + esc(cat.name) + '\', \'' + esc(p.name) + '\', \'' + key + '\', true)">' +
+                      '<option value="small"' + (curSize === 'small' ? ' selected' : '') + '>Pequeno (48px • Miniatura no Discord)</option>' +
+                      '<option value="medium"' + (curSize === 'medium' ? ' selected' : '') + '>Médio (76px • Médio 360px no Discord)</option>' +
+                      '<option value="large"' + (curSize === 'large' ? ' selected' : '') + '>Grande (110px • Grande 640px no Discord)</option>' +
+                      '<option value="full"' + (curSize === 'full' ? ' selected' : '') + '>Banner Completo (148px • Full no Discord)</option>' +
+                    '</select>' +
+                  '</div>' +
+                  '<div>' +
+                    '<label class="block text-xs uppercase mb-1" style="color: var(--muted);">Upload de Foto (Arquivo)</label>' +
+                    '<input id="file_' + key + '" type="file" accept="image/*" class="input text-xs" style="padding: 7px 10px;" onchange="saveProductPhoto(\'' + esc(cat.name) + '\', \'' + esc(p.name) + '\', \'' + key + '\', false)" />' +
+                  '</div>' +
+                '</div>' +
+                '<div class="flex flex-wrap items-center gap-2">' +
+                  '<input id="url_' + key + '" type="text" class="input text-xs flex-1" placeholder="Ou cole a URL da imagem (https://...)" value="' + esc(p.imageUrl || '') + '" />' +
+                  '<button id="btn_' + key + '" class="btn-gold text-xs" onclick="saveProductPhoto(\'' + esc(cat.name) + '\', \'' + esc(p.name) + '\', \'' + key + '\', false)"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>Salvar Foto</button>' +
+                  (hasPhoto
+                    ? '<button class="btn-red text-xs" onclick="removeProductPhoto(\'' + esc(cat.name) + '\', \'' + esc(p.name) + '\')"><i class="fa-solid fa-trash mr-1"></i>Remover</button>'
+                    : '') +
+                '</div>' +
+              '</div>';
+          });
+          html += '</div>';
+        }
+        html += '</div>';
+      });
+      container.innerHTML = html;
+    }
+
+    async function saveProductPhoto(catName, prodName, key, sizeOnly) {
+      try {
+        const sizeEl = document.getElementById('size_' + key);
+        const fileEl = document.getElementById('file_' + key);
+        const urlEl = document.getElementById('url_' + key);
+        const btnEl = document.getElementById('btn_' + key);
+        const chosenSize = sizeEl ? sizeEl.value : 'medium';
+        const file = (!sizeOnly && fileEl && fileEl.files && fileEl.files[0]) ? fileEl.files[0] : null;
+        const directUrl = (urlEl && urlEl.value) ? urlEl.value.trim() : '';
+
+        if (btnEl) {
+          btnEl.disabled = true;
+          btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Enviando...';
+        }
+        toast(file ? 'Enviando foto de ' + prodName + '...' : 'Salvando configuração de ' + prodName + '...');
+
+        const fd = new FormData();
+        fd.append('imageSize', chosenSize);
+        if (file) {
+          fd.append('photo', file);
+        } else if (directUrl) {
+          fd.append('imageUrl', directUrl);
+        }
+
+        const r = await fetch('/api/products/' + encodeURIComponent(catName) + '/' + encodeURIComponent(prodName) + '/photo', {
+          method: 'POST',
+          credentials: 'same-origin',
+          body: fd,
+        });
+        if (r.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || 'Erro ao salvar foto');
+
+        await refresh();
+        renderAll();
+        renderPhotos(true);
+        toast('Foto e tamanho de ' + prodName + ' atualizados!');
+      } catch (e) {
+        toast('Erro: ' + e.message);
+        renderPhotos(true);
+      }
+    }
+
+    async function removeProductPhoto(catName, prodName) {
+      openConfirm('Remover foto', 'Remover a foto do produto ' + prodName + '?', async function () {
+        try {
+          await api('/api/products/' + encodeURIComponent(catName) + '/' + encodeURIComponent(prodName) + '/photo', {
+            method: 'DELETE',
+          });
+          await refresh();
+          renderAll();
+          renderPhotos(true);
+          toast('Foto removida de ' + prodName);
+        } catch (e) {
+          toast('Erro: ' + e.message);
+        }
+      });
+    }
+    window.saveProductPhoto = saveProductPhoto;
+    window.removeProductPhoto = removeProductPhoto;
 
     function renderOrders() {
       const filter = document.getElementById('filterStatus').value;
